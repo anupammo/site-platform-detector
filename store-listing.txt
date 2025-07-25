@@ -1,0 +1,23 @@
+Title: Website Framework Detector
+
+Description:
+Discover which CMS or website builder was used to create any website. Our extension analyzes page structure, scripts, and meta tags to identify platforms like WordPress, Shopify, Wix, Webflow and many others.
+
+Features:
+- Instant framework detection
+- Detailed technical analysis
+- Works on all websites
+- No external servers or data collection
+- Free and open source
+
+How it works:
+1. Install the extension
+2. Navigate to any website
+3. Click the extension icon
+4. See the detected framework
+
+Privacy Policy:
+This extension does not collect, store, or transmit any personal information. All analysis happens locally in your browser.
+
+Support:
+For support or feature requests, please contact a09051985@gmail.com or website: https://anupammondal.in
