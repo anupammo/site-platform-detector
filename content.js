@@ -46,7 +46,7 @@ function detectFramework() {
   // Webflow detection
   else if (isWebflow()) {
     framework = 'Webflow';
-    iconClass = 'fas fa-wave-square';
+    iconClass = 'fab fa-webflow';
     subtitle = 'Design-focused website builder with CMS capabilities';
     colorClass = 'webflow';
     confidence = 85;
@@ -62,7 +62,7 @@ function detectFramework() {
   // Drupal detection
   else if (isDrupal()) {
     framework = 'Drupal';
-    iconClass = 'fas fa-cube';
+    iconClass = 'fab fa-drupal';
     subtitle = 'Enterprise-level open-source CMS';
     colorClass = 'drupal';
     confidence = 80;
