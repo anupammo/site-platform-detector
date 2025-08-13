@@ -1,62 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Framework Detector</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
   <style>
     :root {
-      --primary: #4361ee;
+      --primary: #06038D;
       --secondary: #3f37c9;
-      --accent: #4cc9f0;
-      --success: #2ecc71;
-      --warning: #f39c12;
+      --accent: #06038D;
+      --success: #046A38;
+      --warning: #FF9933;
       --danger: #e74c3c;
       --dark: #2c3e50;
       --light: #ecf0f1;
       --card-bg: rgba(255, 255, 255, 0.1);
-      --wordpress: #21759b;
-      --shopify: #96bf48;
-      --wix: #faad4a;
-      --webflow: #4353ff;
-      --joomla: #5091cd;
-      --drupal: #0678be;
+      --wordpress: #06038D;
+      --shopify: #06038D;
+      --wix: #06038D;
+      --webflow: #06038D;
+      --squarespace: #06038D;
+      --joomla: #06038D;
+      --drupal: #06038D;
     }
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    
+
     body {
-      background: linear-gradient(135deg, #1a2980, #26d0ce);
+      background: #FF9933;
+      background: linear-gradient(165deg, rgba(255, 153, 51, 1) 0%, rgba(255, 153, 51, 1) 40%, rgba(255, 255, 255, 1) 41%, rgba(255, 255, 255, 1) 80%, rgba(19, 136, 8, 1) 81%, rgba(19, 136, 8, 1) 100%);
       color: white;
       width: 400px;
-      min-height: 500px;
+      min-height: 350px;
       padding: 15px;
     }
-    
+
     header {
       text-align: center;
       margin: 15px 0 25px;
     }
-    
+
     h1 {
       font-size: 1.8rem;
       margin-bottom: 10px;
-      background: linear-gradient(90deg, #ff9966, #ff5e62);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--primary);
     }
-    
+
     .subtitle {
       font-size: 0.95rem;
-      color: rgba(255, 255, 255, 0.85);
+      color: var(--primary);
     }
-    
+
     .card {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(10px);
@@ -66,7 +67,7 @@
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .card-title {
       font-size: 1.3rem;
       margin-bottom: 15px;
@@ -75,11 +76,11 @@
       gap: 10px;
       color: var(--accent);
     }
-    
+
     .card-title i {
       font-size: 1.3rem;
     }
-    
+
     .btn {
       background: linear-gradient(45deg, var(--primary), var(--secondary));
       color: white;
@@ -97,83 +98,59 @@
       box-shadow: 0 4px 10px rgba(67, 97, 238, 0.4);
       width: 100%;
     }
-    
+
     .btn:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 15px rgba(67, 97, 238, 0.6);
     }
-    
+
     .btn:active {
       transform: translateY(1px);
     }
-    
+
     .btn-detect {
-      background: linear-gradient(45deg, #ff9966, #ff5e62);
+      background: linear-gradient(45deg, var(--primary), var(--success));
       box-shadow: 0 4px 10px rgba(255, 94, 98, 0.4);
       padding: 14px;
       font-size: 1.1rem;
     }
-    
+
     .btn-detect:hover {
       box-shadow: 0 6px 15px rgba(255, 94, 98, 0.6);
     }
-    
+
     .result-container {
       display: none;
       text-align: center;
       padding: 20px 15px;
     }
-    
+
     .result-icon {
+      color: var(--primary);
       font-size: 4rem;
       margin-bottom: 15px;
       animation: pulse 2s infinite;
     }
-    
+
     .result-title {
+      color: var(--primary);
       font-size: 1.8rem;
       margin-bottom: 10px;
     }
-    
+
     .result-subtitle {
       font-size: 1.1rem;
       margin-bottom: 20px;
-      color: rgba(255, 255, 255, 0.85);
+      color: var(--primary);
     }
-    
-    .result-details {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      padding: 15px;
-      text-align: left;
-      margin-top: 15px;
-    }
-    
-    .result-details h3 {
-      color: var(--accent);
-      margin-bottom: 12px;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .result-details ul {
-      padding-left: 20px;
-    }
-    
-    .result-details li {
-      margin-bottom: 8px;
-      line-height: 1.5;
-      font-size: 0.9rem;
-    }
-    
+
+
     .loading {
       display: none;
       text-align: center;
       padding: 40px 20px;
     }
-    
+
     .spinner {
       width: 50px;
       height: 50px;
@@ -183,17 +160,17 @@
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
     }
-    
+
     .loading h3 {
       font-size: 1.3rem;
       margin-bottom: 10px;
     }
-    
+
     .loading p {
       font-size: 0.95rem;
       color: rgba(255, 255, 255, 0.8);
     }
-    
+
     .confidence-meter {
       height: 15px;
       background: rgba(255, 255, 255, 0.1);
@@ -201,23 +178,24 @@
       margin: 15px 0;
       overflow: hidden;
     }
-    
+
     .confidence-level {
       height: 100%;
       border-radius: 10px;
-      background: linear-gradient(90deg, #ff9966, #ff5e62);
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
       transition: width 1s ease;
     }
-    
+
     .confidence-label {
       display: flex;
       justify-content: space-between;
       margin-bottom: 5px;
       font-size: 0.9rem;
     }
-    
+
     .current-url {
-      background: rgba(0, 0, 0, 0.2);
+      color: var(--primary);
+      border: var(--primary) solid 1px;
       border-radius: 8px;
       padding: 10px;
       font-size: 0.9rem;
@@ -227,51 +205,95 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    
-    .wordpress { color: var(--wordpress); }
-    .shopify { color: var(--shopify); }
-    .wix { color: var(--wix); }
-    .webflow { color: var(--webflow); }
-    .joomla { color: var(--joomla); }
-    .drupal { color: var(--drupal); }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+
+    .wordpress {
+      color: var(--wordpress);
     }
-    
+
+    .shopify {
+      color: var(--shopify);
+    }
+
+    .wix {
+      color: var(--wix);
+    }
+
+    .webflow {
+      color: var(--webflow);
+    }
+    .squarespace {
+      color: var(--squarespace);
+    }
+
+    .joomla {
+      color: var(--joomla);
+    }
+
+    .drupal {
+      color: var(--drupal);
+    }
+
+    p.dev-cred {
+      color: var(--primary);
+      text-align: center;
+      font-size: small;
+      margin-top: 15px;
+    }
+
+    p.dev-cred a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1><i class="fas fa-search"></i> Framework Detector</h1>
     <p class="subtitle">Detects CMS and website builder platforms</p>
   </header>
-  
+
   <div class="card">
     <h2 class="card-title"><i class="fas fa-globe"></i> Current Website</h2>
     <div class="current-url" id="currentUrl"></div>
-    
+
     <button class="btn btn-detect" id="detectBtn">
       <i class="fas fa-play-circle"></i> Detect Framework
     </button>
   </div>
-  
+
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <h3>Analyzing Website</h3>
     <p>Scanning page structure and resources...</p>
   </div>
-  
+
   <div class="result-container" id="resultContainer">
-    <div class="result-icon" id="resultIcon"></div>
+    <i class="result-icon" id="resultIcon"></i>
     <h2 class="result-title" id="resultTitle"></h2>
     <p class="result-subtitle" id="resultSubtitle"></p>
-    
+
     <div class="confidence-label">
       <span>Detection Confidence:</span>
       <span id="confidenceValue">0%</span>
@@ -279,25 +301,27 @@
     <div class="confidence-meter">
       <div class="confidence-level" id="confidenceLevel"></div>
     </div>
-    
-    <div class="result-details">
-      <h3><i class="fas fa-info-circle"></i> Detection Details</h3>
-      <ul id="detectionDetails"></ul>
+
+    <div id="extraInfo">
+      <div id="themeRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-palette"></i> Theme:</strong>
+        <span id="themeValue"></span>
+      </div>
+      <div id="techStackRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-layer-group"></i> Tech stack:</strong>
+        <div id="techStackChips" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
+      <div id="siteInfoRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-circle-info"></i> Site info:</strong>
+        <div id="siteInfoBadges" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
     </div>
+
   </div>
-  
-  <div class="card">
-    <h2 class="card-title"><i class="fas fa-lightbulb"></i> How It Works</h2>
-    <p>This extension analyzes the current webpage to detect:</p>
-    <ul style="padding-left: 20px; margin-top: 10px;">
-      <li>Meta tags and generator information</li>
-      <li>JavaScript objects and variables</li>
-      <li>CSS classes and framework patterns</li>
-      <li>Resource URLs and script sources</li>
-      <li>Cookies and localStorage values</li>
-    </ul>
-  </div>
+
+  <p class="dev-cred">Developed by : <a href="https://anupammondal.in" target="_blank">Anupam Mondal</a></p>
 
   <script src="popup.js"></script>
 </body>
+
 </html>

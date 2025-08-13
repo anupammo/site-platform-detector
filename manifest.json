@@ -1,12 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Website Framework Detector",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Detects CMS and website builder platforms like WordPress, Shopify, Wix, and Webflow",
   "permissions": ["activeTab", "scripting"],
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -23,7 +20,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+  "js": ["themeDetector.js", "techStackDetector.js", "siteInfoDetector.js", "content.js"],
       "run_at": "document_end"
     }
   ]
