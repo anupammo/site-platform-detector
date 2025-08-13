@@ -38,7 +38,7 @@ function detectFramework() {
   // Wix detection
   else if (isWix()) {
     framework = 'Wix';
-    iconClass = 'fas fa-shopping-cart';
+    iconClass = 'fab fa-wix';
     subtitle = 'Popular drag-and-drop website builder';
     colorClass = 'wix';
     confidence = 85;
