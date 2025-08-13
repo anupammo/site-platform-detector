@@ -21,6 +21,7 @@
       --shopify: #06038D;
       --wix: #06038D;
       --webflow: #06038D;
+      --squarespace: #06038D;
       --joomla: #06038D;
       --drupal: #06038D;
     }
@@ -220,6 +221,9 @@
     .webflow {
       color: var(--webflow);
     }
+    .squarespace {
+      color: var(--squarespace);
+    }
 
     .joomla {
       color: var(--joomla);
@@ -296,6 +300,21 @@
     </div>
     <div class="confidence-meter">
       <div class="confidence-level" id="confidenceLevel"></div>
+    </div>
+
+    <div id="extraInfo">
+      <div id="themeRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-palette"></i> Theme:</strong>
+        <span id="themeValue"></span>
+      </div>
+      <div id="techStackRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-layer-group"></i> Tech stack:</strong>
+        <div id="techStackChips" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
+      <div id="siteInfoRow" style="margin-top:10px; display:none; color: var(--primary);">
+        <strong><i class="fa-solid fa-circle-info"></i> Site info:</strong>
+        <div id="siteInfoBadges" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
     </div>
 
   </div>
