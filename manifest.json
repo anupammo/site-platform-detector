@@ -4,6 +4,7 @@
   "version": "1.2.1",
   "description": "Detects CMS and website builder platforms like WordPress, Shopify, Wix, and Webflow",
   "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["*://*/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
