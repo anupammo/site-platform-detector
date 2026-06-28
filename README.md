@@ -2,10 +2,14 @@
 
 > Instantly reveal the CMS, website builder, and full tech stack behind any website — privately, in your browser, with zero tracking.
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Listed-brightgreen)](https://chrome.google.com/webstore)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ebkogcpaeaofidbegiadlfcfhlnaccnn?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)
+[![Users](https://img.shields.io/chrome-web-store/users/ebkogcpaeaofidbegiadlfcfhlnaccnn)](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)
+[![Rating](https://img.shields.io/chrome-web-store/rating/ebkogcpaeaofidbegiadlfcfhlnaccnn)](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn/reviews)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Privacy: Local-only](https://img.shields.io/badge/Privacy-100%25%20Local-success)](marketing/privacy.html)
+
+🔗 **[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)** · **[Learn more](https://anupammondal.in/chrome-extension/website-framework-detector)**
 
 Website Framework Detector is a lightweight Chrome extension that identifies which platform powers a site — **WordPress, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal** and more — along with its frontend libraries, backend hints, theme, and the marketing/analytics tools it loads. Everything runs **locally**: no account, no servers, no data collection.
 
@@ -49,7 +53,7 @@ Most "what is this site built with" tools either phone home, require an account,
 ## Install
 
 ### From the Chrome Web Store (recommended)
-Search for **"Website Framework Detector"** or install from the store listing, then pin the icon to your toolbar.
+**[➜ Install Website Framework Detector](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)**, then pin the icon to your toolbar.
 
 ### Manual / developer install
 1. Download or clone this repository.
@@ -134,12 +138,22 @@ cd site-platform-detector
 
 ## Roadmap
 
+### New detection categories (align engine with the product page)
+- [ ] **Hosting & CDN** — Cloudflare (full), Netlify, Vercel, AWS/CloudFront, Google Cloud, Fastly
+- [ ] **Server & backend** — Apache, Nginx, IIS; PHP, Node.js, ASP.NET (via response headers + asset hints)
+- [ ] **SEO & meta** — canonical tag, robots/meta-robots, structured data (JSON-LD), Open Graph / Twitter cards, hreflang
+- [ ] **More platforms** — WooCommerce, Framer, Remix, Astro, Blogger, HubSpot CMS
+
+### Engine & UX
+- [ ] Response-header signals (enables hosting/server detection)
 - [ ] Auto-detect on popup open (optional)
 - [ ] Copy results / export as JSON
 - [ ] Detection history (opt-in)
-- [ ] Response-header signals
-- [ ] More platforms: Framer, Remix, Astro, Blogger, HubSpot CMS
 - [ ] Firefox / Edge builds
+
+> Note: Hosting/CDN, server, and SEO/meta detection are advertised on the
+> [product page](https://anupammondal.in/chrome-extension/website-framework-detector)
+> and are tracked here to bring the shipped extension in line with that copy.
 
 ---
 
@@ -151,6 +165,9 @@ Issues and pull requests are welcome. Please include a sample URL or HTML fixtur
 
 [GNU GPL v3](LICENSE) © [Anupam Mondal](https://anupammondal.in)
 
-## Support
+## Links & Support
 
-Questions or feature requests: **support@credifyfast.com** · [anupammondal.in](https://anupammondal.in)
+- 🧩 **Chrome Web Store:** [Website Framework Detector](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)
+- 🌐 **Product page:** [anupammondal.in/chrome-extension/website-framework-detector](https://anupammondal.in/chrome-extension/website-framework-detector)
+- ✍️ **Leave a review:** [Rate it on the Web Store](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn/reviews)
+- 📧 **Questions / feature requests:** **support@credifyfast.com**

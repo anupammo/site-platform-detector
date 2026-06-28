@@ -28,10 +28,11 @@ with two buttons: **Rate it** and **Not now**.
 **Correct review URL** (the original plan's URL was malformed):
 
 ```
-https://chromewebstore.google.com/detail/<EXTENSION_ID>/reviews
+https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn/reviews
 ```
 
-`<EXTENSION_ID>` is the 32-char ID from your store listing / Developer Console.
+The extension ID is `ebkogcpaeaofidbegiadlfcfhlnaccnn`
+([store listing](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)).
 
 **Rules for the prompt (policy-safe):**
 - Show it **at most once**, then never again (persist a `reviewPrompted` flag).
@@ -132,6 +133,6 @@ Violating these can get the extension **removed**. Non-negotiable:
 
 - [ ] Add `"storage"` permission + detection counter (Phase 3 dependency).
 - [ ] Build the one-time, policy-safe review prompt in `popup.html` / `popup.js`.
-- [ ] Drop in the real `<EXTENSION_ID>` review URL.
+- [x] Real review URL wired in (ID `ebkogcpaeaofidbegiadlfcfhlnaccnn`).
 - [ ] Prepare translated listing metadata for `es`, `pt_BR`, `de`, `fr`.
 - [ ] Draft the first "Wappalyzer alternative" outreach + one Dev.to article.

@@ -19,5 +19,9 @@ How it works:
 Privacy Policy:
 This extension does not collect, store, or transmit any personal information. All analysis happens locally in your browser.
 
+Links:
+- Chrome Web Store: https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn
+- Product page: https://anupammondal.in/chrome-extension/website-framework-detector
+
 Support:
-For support or feature requests, please contact a09051985@gmail.com or website: https://anupammondal.in
+For support or feature requests, please contact support@credifyfast.com or visit https://anupammondal.in/chrome-extension/website-framework-detector
