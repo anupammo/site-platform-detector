@@ -70,3 +70,6 @@ function detectTheme(framework) {
 
   return { theme, source };
 }
+
+// Expose for on-demand MAIN-world injection.
+if (typeof window !== "undefined") window.detectTheme = detectTheme;

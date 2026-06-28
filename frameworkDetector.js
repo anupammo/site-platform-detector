@@ -142,3 +142,6 @@ function detectFramework() {
     ...realStats
   };
 }
+
+// Expose for on-demand MAIN-world injection (chrome.scripting two-step call).
+if (typeof window !== "undefined") window.detectFramework = detectFramework;

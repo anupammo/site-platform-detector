@@ -117,20 +117,20 @@ function isSupportedTabUrl(urlStr) {
 
 // Orchestrator executed in the page's MAIN world after detector files inject.
 async function collectInPage() {
-  const fw = (typeof detectFramework === 'function')
-    ? detectFramework()
-    : { framework: 'Custom/Unknown', colorClass: '', subtitle: '', confidence: 0, details: [] };
+  const fw = (typeof window.detectFramework === 'function')
+    ? window.detectFramework()
+    : { framework: 'Custom/Unknown', colorClass: '', subtitle: 'Detector script did not load on this page', confidence: 0, details: [] };
   const breakdown = {};
   try {
-    const t = (typeof detectTheme === 'function') ? detectTheme(fw.framework) : { theme: null, source: null };
+    const t = (typeof window.detectTheme === 'function') ? window.detectTheme(fw.framework) : { theme: null, source: null };
     breakdown.theme = t.theme || null; breakdown.themeSource = t.source || null;
   } catch (_) { breakdown.theme = null; }
   try {
-    const ts = (typeof detectTechStack === 'function') ? detectTechStack() : { list: [], icons: [] };
+    const ts = (typeof window.detectTechStack === 'function') ? window.detectTechStack() : { list: [], icons: [] };
     breakdown.techStack = ts.list;
   } catch (_) { breakdown.techStack = ['HTML', 'CSS', 'JavaScript']; }
   try {
-    breakdown.siteInfo = (typeof detectSiteInfo === 'function') ? await detectSiteInfo() : null;
+    breakdown.siteInfo = (typeof window.detectSiteInfo === 'function') ? await window.detectSiteInfo() : null;
   } catch (_) { breakdown.siteInfo = null; }
   return { ...fw, breakdown };
 }
@@ -154,10 +154,12 @@ async function detect() {
       displayResults(data);
       recordSuccessAndMaybePrompt();
     } else {
-      showError('Could not analyze this page.');
+      showError('No result returned from the page.');
     }
-  } catch (_) {
-    showError('Could not analyze this page. It may be a protected or unsupported tab.');
+  } catch (err) {
+    console.error('[Framework Detector]', err);
+    const msg = (err && err.message) ? err.message : String(err);
+    showError('Could not analyze this page: ' + msg);
   }
 }
 

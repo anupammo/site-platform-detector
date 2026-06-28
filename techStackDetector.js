@@ -59,3 +59,6 @@ function detectTechStack() {
   const icons = list.map(name => ({ name, icon: faMap[name] || 'fa-solid fa-circle' }));
   return { list, icons };
 }
+
+// Expose for on-demand MAIN-world injection.
+if (typeof window !== "undefined") window.detectTechStack = detectTechStack;

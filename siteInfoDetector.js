@@ -92,3 +92,6 @@ function detectSiteInfo() {
     }
   });
 }
+
+// Expose for on-demand MAIN-world injection.
+if (typeof window !== "undefined") window.detectSiteInfo = detectSiteInfo;
