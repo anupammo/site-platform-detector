@@ -170,4 +170,4 @@ Issues and pull requests are welcome. Please include a sample URL or HTML fixtur
 - 🧩 **Chrome Web Store:** [Website Framework Detector](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn)
 - 🌐 **Product page:** [anupammondal.in/chrome-extension/website-framework-detector](https://anupammondal.in/chrome-extension/website-framework-detector)
 - ✍️ **Leave a review:** [Rate it on the Web Store](https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn/reviews)
-- 📧 **Questions / feature requests:** **support@credifyfast.com**
+- 📧 **Questions / feature requests:** **a09051985@gmail.com** **anupam.wd@gmail.com**
