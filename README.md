@@ -44,9 +44,12 @@ Most "what is this site built with" tools either phone home, require an account,
 - 🧩 **Tech stack** — React, Vue, Angular, Svelte, Next.js, Nuxt, Gatsby, Astro, jQuery, Tailwind, Bootstrap, and common backends.
 - 🎨 **Theme detection** — extracts the active theme/template where the platform exposes it.
 - 📈 **Marketing & analytics tags** — Google Analytics/GA4, GTM, Meta Pixel, Hotjar, Clarity, Segment, Mixpanel, HubSpot, TikTok, LinkedIn, and more.
-- 📊 **Real confidence scoring** — score reflects how many independent signals matched.
-- 🗺️ **Sitemap & robots check** — quick presence indicators.
-- ⚡ **Instant & quiet** — analyzes on demand, then gets out of the way.
+- 📊 **Real confidence scoring** — score reflects how many independent signals matched (never a random number).
+- 🗺️ **Sitemap check** — quick presence indicator.
+- ⚡ **Auto-detect on open** — results appear the moment you open the popup; one click to re-scan.
+- 📋 **Copy & export** — copy a summary or download the full result as JSON.
+- 🌙 **Dark mode** — follows your system theme, with a manual toggle.
+- 🔒 **Zero external assets** — icons are inline SVG; nothing is loaded from a CDN.
 
 ---
 
@@ -66,10 +69,9 @@ Most "what is this site built with" tools either phone home, require an account,
 ## Usage
 
 1. Open any website.
-2. Click the extension icon.
-3. Click **Detect Framework**.
+2. Click the extension icon — detection runs **automatically**.
 
-You'll see the detected platform, a confidence score, the theme, the tech stack, and any marketing/analytics tags present on the page.
+You'll see the detected platform, a confidence score, the theme, the tech stack, and any marketing/analytics tags present on the page. Use **Re-scan** to run again, **Copy**/**Export JSON** to grab the results, and the header toggle for dark mode.
 
 ![Tech stack and tags](screenshots/screenshot2.png)
 
@@ -145,9 +147,10 @@ cd site-platform-detector
 - [ ] **More platforms** — WooCommerce, Framer, Remix, Astro, Blogger, HubSpot CMS
 
 ### Engine & UX
+- [x] Auto-detect on popup open
+- [x] Copy results / export as JSON
+- [x] Dark mode
 - [ ] Response-header signals (enables hosting/server detection)
-- [ ] Auto-detect on popup open (optional)
-- [ ] Copy results / export as JSON
 - [ ] Detection history (opt-in)
 - [ ] Firefox / Edge builds
 

@@ -1,6 +1,12 @@
-// Background script for more complex operations
-// Currently not needed for this extension but included for completeness
+// Service worker — lifecycle only.
+// On first install, open the product/onboarding page (drives traffic + helps
+// users understand the extension). We intentionally do NOT force-open a tab on
+// every update — that annoys users and hurts ratings. A subtle "What's new"
+// hint lives in the popup instead.
+const PRODUCT_URL = 'https://anupammondal.in/chrome-extension/website-framework-detector';
 
-chrome.runtime.onInstalled.addListener(() => {
-  console.log('Framework Detector extension installed');
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: PRODUCT_URL });
+  }
 });
