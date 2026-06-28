@@ -13,17 +13,20 @@ Find out what any website is built with — WordPress, Shopify, Wix, Webflow & i
 Detailed description:
 Ever wondered "what is this website built with?" Website Framework Detector tells you in one click — the CMS or website builder, the theme, the full front-end tech stack, and the marketing/analytics tools a site loads. A fast, private, free alternative to heavyweight tools — with no account and no data collection.
 
-✅ DETECTS CMS & WEBSITE BUILDERS
-WordPress, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, and more — with a real confidence score based on the actual signals found (never a random guess).
+✅ DETECTS 17 CMS, BUILDERS & E-COMMERCE PLATFORMS
+WordPress, WooCommerce, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda — with a real confidence score based on the actual signals found (never a random guess).
 
 ✅ TECH STACK CHECKER
-React, Vue, Angular, Svelte, Next.js, Nuxt, Gatsby, Astro, jQuery, Tailwind CSS, Bootstrap, and common back-ends.
+React, Preact, Vue, Angular, Svelte, Solid, Qwik, Next.js, Nuxt, Remix, Gatsby, Astro, Hugo, Jekyll, jQuery, Tailwind CSS, Bootstrap, Three.js, GSAP, Stripe, and more.
 
 ✅ THEME DETECTION
 Reveals the active theme/template where the platform exposes it.
 
 ✅ MARKETING & ANALYTICS TAGS
 Google Analytics (GA4), Google Tag Manager, Meta Pixel, Hotjar, Microsoft Clarity, HubSpot, LinkedIn, TikTok, Pinterest, Intercom, and more.
+
+✅ PAGE INFO & HEALTH CHECKS
+Word count, reading time, image alt-text audit, and at-a-glance checks for HTTPS, mobile-friendliness, meta description, canonical tag, social cards, and structured data.
 
 ✅ BUILT FOR REAL WORK
 • Auto-detects the moment you open it — one click to re-scan

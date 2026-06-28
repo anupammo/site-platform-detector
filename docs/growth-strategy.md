@@ -41,10 +41,9 @@ The extension ID is `ebkogcpaeaofidbegiadlfcfhlnaccnn`
   to a private form ("review gating") — that is prohibited.
 - Keep it dismissible and non-blocking.
 
-> **Prerequisite (code):** the extension currently has **no `storage` permission
-> and no usage counter**. This step depends on adding `"storage"` to the manifest
-> and a counter in `popup.js` — scheduled as part of Phase 3 of the
-> [release plan](../README.md#roadmap). Implement that first.
+> **Status:** ✅ Shipped in v1.3. The `storage` permission, the successful-detection
+> counter, and the one-time prompt (with a 30-day "Not now" re-arm) are implemented
+> in `popup.js`. The remaining work here is monitoring rating velocity.
 
 ---
 
@@ -131,8 +130,8 @@ Violating these can get the extension **removed**. Non-negotiable:
 
 ## Next actions
 
-- [ ] Add `"storage"` permission + detection counter (Phase 3 dependency).
-- [ ] Build the one-time, policy-safe review prompt in `popup.html` / `popup.js`.
+- [x] Add `"storage"` permission + detection counter.
+- [x] Build the one-time, policy-safe review prompt in `popup.html` / `popup.js` (shipped in v1.3).
 - [x] Real review URL wired in (ID `ebkogcpaeaofidbegiadlfcfhlnaccnn`).
 - [ ] Prepare translated listing metadata for `es`, `pt_BR`, `de`, `fr`.
 - [ ] Draft the first "Wappalyzer alternative" outreach + one Dev.to article.
