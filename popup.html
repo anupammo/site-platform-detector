@@ -99,6 +99,8 @@
       transition: all .15s ease;
     }
     .icon-btn:hover { color: var(--primary); border-color: var(--primary); }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn.ok { color: var(--success); border-color: var(--success); }
 
     /* URL bar */
     .url-bar {
@@ -107,6 +109,8 @@
       border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; box-shadow: var(--shadow);
     }
     .url-bar .icon { width: 16px; height: 16px; color: var(--text-dim); }
+    #favicon { display: inline-flex; align-items: center; flex: none; }
+    #favicon img { width: 16px; height: 16px; border-radius: 3px; object-fit: contain; display: block; }
     #currentUrl { flex: 1; font-size: 0.84rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #rescanBtn { width: 28px; height: 28px; }
     #rescanBtn .icon { width: 15px; height: 15px; }
@@ -125,11 +129,14 @@
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
 
     .hero { display: flex; align-items: center; gap: 13px; }
-    .mono {
+    /* Brand logo on a white tile so colored marks stay crisp in light + dark mode */
+    .logo-tile {
       display: inline-flex; align-items: center; justify-content: center;
-      font-weight: 700; color: #fff; border-radius: 12px; flex: none;
+      background: #fff; border: 1px solid var(--border); flex: none; overflow: hidden;
     }
-    .hero .mono { width: 52px; height: 52px; font-size: 1.4rem; border-radius: 14px; }
+    .logo-tile img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .logo-hero { width: 52px; height: 52px; border-radius: 14px; padding: 10px; }
+    .logo-chip { width: 20px; height: 20px; border-radius: 6px; padding: 3px; }
     .hero-text h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.15; }
     .hero-text p { font-size: 0.82rem; color: var(--text-dim); margin-top: 3px; }
 
@@ -144,9 +151,19 @@
     .section h3 .icon { width: 15px; height: 15px; }
     .theme-value { font-size: 0.92rem; font-weight: 600; color: var(--text); }
 
+    /* Page info: stat grid + check chips */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat { background: var(--surface-2); border-radius: 10px; padding: 8px 6px; text-align: center; }
+    .stat-val { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .stat-lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-dim); margin-top: 2px; }
+    .checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .check { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border); }
+    .check .icon { width: 13px; height: 13px; }
+    .check.ok { color: var(--success); }
+    .check.no { color: var(--text-dim); }
+
     .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-    .chip { display: inline-flex; align-items: center; gap: 7px; background: var(--chip-bg); border: 1px solid var(--border); padding: 5px 9px 5px 5px; border-radius: 999px; font-size: 0.8rem; color: var(--text); }
-    .chip .mono { width: 20px; height: 20px; font-size: 0.62rem; border-radius: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; background: var(--chip-bg); border: 1px solid var(--border); padding: 4px 10px 4px 4px; border-radius: 999px; font-size: 0.8rem; color: var(--text); }
 
     .actions { display: flex; gap: 8px; margin-top: 16px; }
     .btn {
@@ -170,8 +187,18 @@
     .review p { font-size: 0.9rem; margin-bottom: 11px; }
     .review-actions { display: flex; gap: 8px; }
 
-    footer { text-align: center; font-size: 0.72rem; color: var(--text-dim); margin-top: 14px; }
-    footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    footer { text-align: center; margin-top: 14px; }
+    .cross-promo {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 0.8rem; font-weight: 600; color: var(--primary); text-decoration: none;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+      padding: 6px 12px; transition: all .15s ease;
+    }
+    .cross-promo:hover { border-color: var(--primary); }
+    .cross-promo .icon { width: 14px; height: 14px; }
+    .cross-promo .ext { color: var(--text-dim); }
+    .dev-cred { font-size: 0.72rem; color: var(--text-dim); margin-top: 10px; }
+    .dev-cred a { color: var(--primary); text-decoration: none; font-weight: 600; }
     .copied { color: var(--success) !important; border-color: var(--success) !important; }
   </style>
 </head>
@@ -182,13 +209,18 @@
       <img src="icons/icon128.png" alt="Website Framework Detector logo" class="brand-logo">
       <h1>Framework Detector</h1>
     </div>
-    <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
-      <svg class="icon"><use href="#i-moon"></use></svg>
-    </button>
+    <div class="header-actions">
+      <button class="icon-btn" id="shareBtn" title="Share this extension" aria-label="Share this extension">
+        <svg class="icon"><use href="#i-share"></use></svg>
+      </button>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+        <svg class="icon"><use href="#i-moon"></use></svg>
+      </button>
+    </div>
   </header>
 
   <div class="url-bar">
-    <svg class="icon"><use href="#i-globe"></use></svg>
+    <span id="favicon"><svg class="icon"><use href="#i-globe"></use></svg></span>
     <span id="currentUrl">—</span>
     <button class="icon-btn" id="rescanBtn" title="Re-scan" aria-label="Re-scan">
       <svg class="icon"><use href="#i-refresh"></use></svg>
@@ -205,7 +237,7 @@
 
   <main class="card result hidden" id="resultContainer">
     <section class="hero">
-      <div class="mono" id="resultIcon">?</div>
+      <span class="logo-tile logo-hero" id="resultIcon"><img src="icons/brands/_generic.svg" alt=""></span>
       <div class="hero-text">
         <h2 id="resultTitle">—</h2>
         <p id="resultSubtitle"></p>
@@ -235,6 +267,12 @@
       <div class="chips" id="siteInfoBadges"></div>
     </section>
 
+    <section class="section hidden" id="pageInfoRow">
+      <h3><svg class="icon"><use href="#i-file"></use></svg> Page info</h3>
+      <div class="stat-grid" id="pageInfoStats"></div>
+      <div class="checks" id="pageInfoChecks"></div>
+    </section>
+
     <div class="actions">
       <button class="btn" id="copyBtn"><svg class="icon"><use href="#i-copy"></use></svg> Copy</button>
       <button class="btn" id="exportBtn"><svg class="icon"><use href="#i-download"></use></svg> Export JSON</button>
@@ -256,7 +294,13 @@
     </div>
   </div>
 
-  <footer>Developed by <a href="https://anupammondal.in" target="_blank" rel="noopener">Anupam Mondal</a></footer>
+  <footer>
+    <a class="cross-promo" href="https://chromewebstore.google.com/detail/jgigdhidhmgikfnccdnehcpgoggmagfh?utm_source=item-share-cb" target="_blank" rel="noopener">
+      <svg class="icon"><use href="#i-star"></use></svg> Also try: SEO Checklist
+      <svg class="icon ext"><use href="#i-external"></use></svg>
+    </a>
+    <div class="dev-cred">Developed by <a href="https://anupammondal.in" target="_blank" rel="noopener">Anupam Mondal</a></div>
+  </footer>
 
   <!-- Inline SVG sprite (icons by Feather, MIT) — fully local, no external assets -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -267,6 +311,11 @@
     <symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
     <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>

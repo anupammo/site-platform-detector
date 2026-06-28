@@ -9,53 +9,53 @@ function detectTechStack() {
   const q = (sel) => { try { return !!document.querySelector(sel); } catch (_) { return false; } };
   const srcMatch = (re) => { try { return [...document.scripts].some(s => s.src && re.test(s.src)); } catch (_) { return false; } };
   const cssMatch = (re) => { try { return [...document.styleSheets].some(s => s.href && re.test(s.href)); } catch (_) { return false; } };
+  const linkMatch = (re) => { try { return [...document.querySelectorAll('link[href]')].some(l => re.test(l.href)); } catch (_) { return false; } };
+  const gen = (() => { try { const m = document.querySelector('meta[name="generator"]'); return (m && m.content) || ''; } catch (_) { return ''; } })();
   const add = (name, cond) => { try { if (cond) stack.add(name); } catch (_) {} };
 
-  // Frameworks & libraries (prefer runtime globals + precise asset paths)
+  // JS frameworks / UI libraries (prefer runtime globals + precise asset paths)
   add('ReactJS', hasGlobal('React') || q('[data-reactroot], [data-reactid]') || srcMatch(/react(-dom)?[.@-]/i));
+  add('Preact', hasGlobal('preact') || srcMatch(/preact(\.min)?\.js|preact@/i));
   add('VueJS', hasGlobal('Vue') || q('[data-v-app], [data-vue]') || srcMatch(/vue(@|\.runtime|\.global|\.min)?\.js/i));
   add('Angular', hasGlobal('ng') || q('[ng-version], [ng-app], [ng-controller]') || srcMatch(/@angular|angular(\.min)?\.js/i));
   add('Svelte', q('[class*="svelte-"]') || srcMatch(/svelte/i));
+  add('SolidJS', srcMatch(/solid-js|\/solid@/i));
+  add('Qwik', q('[q\\:container], [q\\:version]') || srcMatch(/qwik/i));
+  add('Ember', hasGlobal('Ember') || q('.ember-application, [id^="ember"]'));
   add('Alpine.js', hasGlobal('Alpine') || q('[x-data]') || srcMatch(/alpine(js)?(\.min)?\.js/i));
+
+  // Meta-frameworks / SSGs (globals, asset paths, or generator meta)
   add('NextJS', hasGlobal('__NEXT_DATA__') || q('#__next') || srcMatch(/\/_next\//i));
   add('NuxtJS', hasGlobal('__NUXT__') || q('#__nuxt') || srcMatch(/\/_nuxt\//i));
+  add('Remix', hasGlobal('__remixContext') || srcMatch(/\/build\/_shared\/|remix/i));
   add('Gatsby', hasGlobal('___gatsby') || q('#___gatsby') || srcMatch(/\/page-data\//i));
-  add('Astro', q('[data-astro-cid], astro-island') || srcMatch(/astro/i));
-  add('jQuery', hasGlobal('jQuery'));
-  add('Lodash', (hasGlobal('_') && !!(window._ && window._.VERSION)) || srcMatch(/lodash(\.min)?\.js/i));
-  add('Moment.js', hasGlobal('moment') || srcMatch(/moment(\.min)?\.js/i));
+  add('Astro', q('[data-astro-cid], astro-island') || /Astro/i.test(gen));
+  add('Hugo', /Hugo/i.test(gen));
+  add('Jekyll', /Jekyll/i.test(gen));
+  add('Eleventy', /Eleventy/i.test(gen));
 
   // CSS frameworks
   add('Bootstrap', cssMatch(/bootstrap(\.min)?\.css/i) || srcMatch(/bootstrap(\.bundle)?(\.min)?\.js/i));
   add('Tailwind CSS', cssMatch(/tailwind/i));
+  add('Font Awesome', cssMatch(/font-?awesome|fontawesome/i) || srcMatch(/fontawesome/i) || q('[class^="fa-"], [class*=" fa-"]'));
+  add('Google Fonts', linkMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/i));
 
-  // Backends with reliable client-visible signals only
+  // Popular libraries
+  add('jQuery', hasGlobal('jQuery'));
+  add('Lodash', (hasGlobal('_') && !!(window._ && window._.VERSION)) || srcMatch(/lodash(\.min)?\.js/i));
+  add('Moment.js', hasGlobal('moment') || srcMatch(/moment(\.min)?\.js/i));
+  add('Three.js', hasGlobal('THREE') || srcMatch(/three(\.min|\.module)?\.js/i));
+  add('GSAP', hasGlobal('gsap') || srcMatch(/gsap|TweenMax|TweenLite/i));
+  add('Stripe', hasGlobal('Stripe') || srcMatch(/js\.stripe\.com/i));
+
+  // Back-ends with reliable client-visible signals only
   add('ASP.NET', q('input[name="__VIEWSTATE"]'));
   add('Ruby on Rails', q('meta[name="csrf-param"], meta[name="csrf-token"], [data-turbo], [data-turbolinks]'));
 
   const list = Array.from(stack);
   const faMap = {
-    'HTML': 'fa-brands fa-html5',
-    'CSS': 'fa-brands fa-css3-alt',
-    'JavaScript': 'fa-brands fa-square-js',
-    'ReactJS': 'fa-brands fa-react',
-    'Angular': 'fa-brands fa-angular',
-    'VueJS': 'fa-brands fa-vuejs',
-    'Svelte': 'fa-solid fa-bolt',
-    'Alpine.js': 'fa-solid fa-mountain-sun',
-    'Gatsby': 'fa-solid fa-rocket',
-    'NuxtJS': 'fa-solid fa-mountain',
-    'NextJS': 'fa-solid fa-n',
-    'Astro': 'fa-solid fa-rocket',
-    'Bootstrap': 'fa-brands fa-bootstrap',
-    'Tailwind CSS': 'fa-solid fa-wind',
-    'ASP.NET': 'fa-brands fa-windows',
-    'Ruby on Rails': 'fa-solid fa-gem',
-    'jQuery': 'fa-solid fa-code',
-    'Lodash': 'fa-solid fa-cubes',
-    'Moment.js': 'fa-solid fa-clock'
+    'HTML': 'fa-brands fa-html5', 'CSS': 'fa-brands fa-css3-alt', 'JavaScript': 'fa-brands fa-square-js'
   };
-
   const icons = list.map(name => ({ name, icon: faMap[name] || 'fa-solid fa-circle' }));
   return { list, icons };
 }

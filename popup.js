@@ -1,43 +1,50 @@
 // Popup controller: auto-detect on open, render results, copy/export,
 // dark-mode toggle, and a policy-safe one-time review prompt.
 
-const REVIEW_URL = 'https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn/reviews';
+const STORE_URL = 'https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn';
+const REVIEW_URL = STORE_URL + '/reviews';
 const REVIEW_AFTER = 5;            // successful detections before prompting
 const REVIEW_REARM_MS = 30 * 24 * 60 * 60 * 1000; // 30 days for "Not now"
 
-// Brand / category colors for the monogram badges.
-const COLORS = {
-  WordPress: '#21759b', Shopify: '#95BF47', Wix: '#0c6efc', Webflow: '#4353ff',
-  Squarespace: '#111111', Joomla: '#5091cd', Drupal: '#0077C0', 'Custom/Unknown': '#6b7280',
-  ReactJS: '#61dafb', VueJS: '#42b883', Angular: '#dd0031', Svelte: '#ff3e00',
-  'Alpine.js': '#77c1d2', NextJS: '#111111', NuxtJS: '#00dc82', Gatsby: '#663399',
-  Astro: '#ff5d01', Bootstrap: '#7952b3', 'Tailwind CSS': '#38bdf8', jQuery: '#0769ad',
-  'ASP.NET': '#512bd4', 'Ruby on Rails': '#cc0000', Lodash: '#3492ff', 'Moment.js': '#777777',
-  HTML: '#e34f26', CSS: '#1572b6', JavaScript: '#f7df1e'
+// Map a detected name to its bundled brand logo (icons/brands/<slug>.svg).
+// Anything without a brand logo falls back to a neutral generic icon.
+const BRAND_SLUG = {
+  // Platforms / CMS / e-commerce
+  'WordPress': 'wordpress', 'WooCommerce': 'woocommerce', 'Shopify': 'shopify', 'Wix': 'wix',
+  'Webflow': 'webflow', 'Squarespace': 'squarespace', 'Joomla': 'joomla', 'Drupal': 'drupal',
+  'Magento': 'magento', 'PrestaShop': 'prestashop', 'BigCommerce': 'bigcommerce', 'Ghost': 'ghost',
+  'Blogger': 'blogger', 'HubSpot CMS': 'hubspot', 'Framer': 'framer', 'Craft CMS': 'craftcms',
+  // Languages & frameworks
+  'HTML': 'html5', 'CSS': 'css3', 'JavaScript': 'javascript',
+  'ReactJS': 'react', 'Preact': 'preact', 'VueJS': 'vuedotjs', 'Angular': 'angular',
+  'Svelte': 'svelte', 'SolidJS': 'solid', 'Qwik': 'qwik', 'Ember': 'emberdotjs',
+  'Alpine.js': 'alpinedotjs', 'NextJS': 'nextdotjs', 'NuxtJS': 'nuxtdotjs', 'Remix': 'remix',
+  'Gatsby': 'gatsby', 'Astro': 'astro', 'Hugo': 'hugo', 'Jekyll': 'jekyll', 'Eleventy': 'eleventy',
+  // CSS / libraries
+  'Bootstrap': 'bootstrap', 'Tailwind CSS': 'tailwindcss', 'Font Awesome': 'fontawesome',
+  'Google Fonts': 'googlefonts', 'jQuery': 'jquery', 'Lodash': 'lodash',
+  'Three.js': 'threedotjs', 'GSAP': 'greensock', 'Stripe': 'stripe',
+  'ASP.NET': 'dotnet', 'Ruby on Rails': 'rubyonrails',
+  // Analytics / tags
+  'Google Tag Manager': 'googletagmanager', 'Meta Pixel': 'facebook', 'Hotjar': 'hotjar',
+  'Cloudflare': 'cloudflare', 'HubSpot': 'hubspot', 'LinkedIn Insight': 'linkedin',
+  'Twitter Pixel': 'x', 'Pinterest Tag': 'pinterest', 'TikTok Pixel': 'tiktok',
+  'Intercom': 'intercom', 'Sitemap': 'sitemap'
 };
-const TAG_COLOR = '#4361ee';
-
-function colorFor(name) { return COLORS[name] || TAG_COLOR; }
-function initials(name) {
-  const clean = String(name).replace(/\(.*?\)/g, '').trim();
-  const words = clean.split(/[\s/.-]+/).filter(Boolean);
-  if (!words.length) return '?';
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase().replace(/[^A-Z0-9]/g, '') || words[0][0].toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
+function slugFor(name) {
+  if (BRAND_SLUG[name]) return BRAND_SLUG[name];
+  if (String(name).startsWith('Google Analytics')) return 'googleanalytics';
+  return '_generic';
 }
-function makeMono(name, cls) {
-  const span = document.createElement('span');
-  span.className = 'mono' + (cls ? ' ' + cls : '');
-  span.style.background = colorFor(name);
-  span.textContent = initials(name);
-  // Pick readable text color for light backgrounds (e.g. JS yellow).
-  span.style.color = isLight(colorFor(name)) ? '#111' : '#fff';
-  return span;
-}
-function isLight(hex) {
-  const c = hex.replace('#', '');
-  const r = parseInt(c.substr(0, 2), 16), g = parseInt(c.substr(2, 2), 16), b = parseInt(c.substr(4, 2), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) > 170;
+function buildIcon(name, variant) {
+  const tile = document.createElement('span');
+  tile.className = 'logo-tile ' + (variant === 'hero' ? 'logo-hero' : 'logo-chip');
+  const img = document.createElement('img');
+  img.src = 'icons/brands/' + slugFor(name) + '.svg';
+  img.alt = name;
+  img.addEventListener('error', () => { img.src = 'icons/brands/_generic.svg'; }, { once: true });
+  tile.appendChild(img);
+  return tile;
 }
 
 const els = {};
@@ -49,12 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
   [
     'currentUrl', 'loading', 'resultContainer', 'resultTitle', 'resultSubtitle', 'resultIcon',
     'confidenceLevel', 'confidenceValue', 'themeRow', 'themeValue', 'techStackRow', 'techStackChips',
-    'siteInfoRow', 'siteInfoBadges', 'errorBox', 'errorMsg', 'retryBtn', 'rescanBtn', 'copyBtn',
-    'exportBtn', 'themeToggle', 'reviewPrompt', 'reviewYes', 'reviewLater'
+    'siteInfoRow', 'siteInfoBadges', 'pageInfoRow', 'pageInfoStats', 'pageInfoChecks',
+    'errorBox', 'errorMsg', 'retryBtn', 'rescanBtn', 'copyBtn',
+    'exportBtn', 'themeToggle', 'reviewPrompt', 'reviewYes', 'reviewLater', 'favicon', 'shareBtn'
   ].forEach(id => { els[id] = document.getElementById(id); });
 
   initTheme();
   els.themeToggle.addEventListener('click', toggleTheme);
+  els.shareBtn.addEventListener('click', shareExtension);
   els.rescanBtn.addEventListener('click', () => detect());
   els.retryBtn.addEventListener('click', () => detect());
   els.copyBtn.addEventListener('click', copyResult);
@@ -95,6 +104,7 @@ async function start() {
     currentTab = tab;
     try { currentHost = new URL(tab.url).hostname || tab.url; } catch { currentHost = tab.url || ''; }
     els.currentUrl.textContent = currentHost;
+    setFavicon(tab.favIconUrl);
 
     if (!tab || !isSupportedTabUrl(tab.url)) {
       showError('Open a normal website tab (http/https) to run detection.');
@@ -104,6 +114,17 @@ async function start() {
   } catch (_) {
     showError('Could not read the current tab.');
   }
+}
+
+// Show the page's own favicon in the URL bar; fall back to the globe icon.
+function setFavicon(favUrl) {
+  if (!els.favicon || !favUrl || !/^(https?:|data:)/.test(favUrl)) return;
+  const img = document.createElement('img');
+  img.alt = '';
+  img.referrerPolicy = 'no-referrer';
+  img.addEventListener('load', () => { els.favicon.innerHTML = ''; els.favicon.appendChild(img); });
+  img.addEventListener('error', () => { /* keep globe fallback */ });
+  img.src = favUrl;
 }
 
 function isSupportedTabUrl(urlStr) {
@@ -132,6 +153,9 @@ async function collectInPage() {
   try {
     breakdown.siteInfo = (typeof window.detectSiteInfo === 'function') ? await window.detectSiteInfo() : null;
   } catch (_) { breakdown.siteInfo = null; }
+  try {
+    breakdown.pageInfo = (typeof window.detectPageInfo === 'function') ? window.detectPageInfo() : null;
+  } catch (_) { breakdown.pageInfo = null; }
   return { ...fw, breakdown };
 }
 
@@ -145,7 +169,7 @@ async function detect() {
     const target = { tabId: currentTab.id };
     await chrome.scripting.executeScript({
       target, world: 'MAIN',
-      files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'frameworkDetector.js']
+      files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'pageInfoDetector.js', 'frameworkDetector.js']
     });
     const results = await chrome.scripting.executeScript({ target, world: 'MAIN', func: collectInPage });
     const data = results && results[0] && results[0].result;
@@ -207,24 +231,76 @@ function displayResults(data) {
   tags.forEach(name => els.siteInfoBadges.appendChild(buildChip(name)));
   els.siteInfoRow.classList.toggle('hidden', tags.length === 0);
 
+  // Page info
+  renderPageInfo(data.breakdown && data.breakdown.pageInfo);
+
   els.loading.classList.add('hidden');
   els.errorBox.classList.add('hidden');
   els.resultContainer.classList.remove('hidden');
 }
 
 function buildHeroIcon(name) {
-  const m = makeMono(name);
-  m.id = 'resultIcon';
-  return m;
+  const tile = buildIcon(name, 'hero');
+  tile.id = 'resultIcon';
+  return tile;
 }
 function buildChip(name) {
   const chip = document.createElement('span');
   chip.className = 'chip';
-  chip.appendChild(makeMono(name));
+  chip.appendChild(buildIcon(name, 'chip'));
   const label = document.createElement('span');
   label.textContent = name;
   chip.appendChild(label);
   return chip;
+}
+
+function renderPageInfo(info) {
+  els.pageInfoStats.innerHTML = '';
+  els.pageInfoChecks.innerHTML = '';
+  if (!info) { els.pageInfoRow.classList.add('hidden'); return; }
+
+  const stats = [
+    { label: 'Words', value: info.words.toLocaleString() },
+    { label: 'Read time', value: info.readingTime + ' min' },
+    { label: 'Images', value: info.images + (info.imagesMissingAlt ? ' (' + info.imagesMissingAlt + ' no alt)' : '') },
+    { label: 'Links', value: info.links },
+    { label: 'Scripts', value: info.scripts },
+    { label: 'Headings', value: info.headings }
+  ];
+  stats.forEach(s => {
+    const cell = document.createElement('div');
+    cell.className = 'stat';
+    const v = document.createElement('div'); v.className = 'stat-val'; v.textContent = s.value;
+    const l = document.createElement('div'); l.className = 'stat-lbl'; l.textContent = s.label;
+    cell.appendChild(v); cell.appendChild(l);
+    els.pageInfoStats.appendChild(cell);
+  });
+
+  const checks = [
+    { label: 'HTTPS', ok: info.https },
+    { label: 'Mobile-friendly', ok: info.mobileFriendly },
+    { label: 'Meta description', ok: info.hasDescription },
+    { label: 'Canonical', ok: info.canonical },
+    { label: 'Social cards', ok: info.socialCards },
+    { label: 'Structured data', ok: info.structuredData },
+    { label: 'Single H1', ok: info.h1 === 1 }
+  ];
+  checks.forEach(c => {
+    const chip = document.createElement('span');
+    chip.className = 'check ' + (c.ok ? 'ok' : 'no');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'icon');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', c.ok ? '#i-check' : '#i-x');
+    svg.appendChild(use);
+    chip.appendChild(svg);
+    const label = document.createElement('span');
+    label.textContent = c.label;
+    chip.appendChild(label);
+    els.pageInfoChecks.appendChild(chip);
+  });
+
+  els.pageInfoRow.classList.remove('hidden');
 }
 
 function siteInfoToList(info) {
@@ -261,6 +337,7 @@ function buildExport() {
     theme: b.theme || null,
     techStack: b.techStack || [],
     analyticsAndTags: siteInfoToList(b.siteInfo),
+    pageInfo: b.pageInfo || null,
     stats: { scripts: lastResult.scriptsFound, metaTags: lastResult.metaTags, links: lastResult.linksFound }
   };
 }
@@ -299,6 +376,35 @@ function flash(btn, msg) {
   label.textContent = ' ' + msg;
   btn.classList.add('copied');
   setTimeout(() => { label.textContent = original; btn.classList.remove('copied'); }, 1400);
+}
+
+// ---------- Share (outreach) ----------
+async function shareExtension() {
+  const shareData = {
+    title: 'Website Framework Detector',
+    text: 'Find out what any website is built with — CMS, builder, and tech stack. 100% local, no tracking.',
+    url: STORE_URL
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+  } catch (_) { return; } // user cancelled the native sheet
+  // Fallback: copy the store link and confirm on the button.
+  try {
+    await navigator.clipboard.writeText(STORE_URL);
+    flashIcon(els.shareBtn, '#i-check');
+  } catch (_) {
+    chrome.tabs.create({ url: STORE_URL });
+  }
+}
+function flashIcon(btn, tempHref) {
+  const use = btn.querySelector('use');
+  const original = use.getAttribute('href');
+  use.setAttribute('href', tempHref);
+  btn.classList.add('ok');
+  setTimeout(() => { use.setAttribute('href', original); btn.classList.remove('ok'); }, 1400);
 }
 
 // ---------- Review prompt (policy-safe, one-time) ----------

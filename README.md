@@ -144,7 +144,8 @@ cd site-platform-detector
 - [ ] **Hosting & CDN** — Cloudflare (full), Netlify, Vercel, AWS/CloudFront, Google Cloud, Fastly
 - [ ] **Server & backend** — Apache, Nginx, IIS; PHP, Node.js, ASP.NET (via response headers + asset hints)
 - [ ] **SEO & meta** — canonical tag, robots/meta-robots, structured data (JSON-LD), Open Graph / Twitter cards, hreflang
-- [ ] **More platforms** — WooCommerce, Framer, Remix, Astro, Blogger, HubSpot CMS
+- [x] **More platforms** — WooCommerce, Magento, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda
+- [x] **Page info panel** — word count, reading time, images/alt, mobile-friendly, HTTPS, canonical, social cards, structured data
 
 ### Engine & UX
 - [x] Auto-detect on popup open

@@ -61,11 +61,17 @@ function detectTheme(framework) {
     }
 
     if (!theme) {
-      const genericThemeMeta = document.querySelector('meta[name="theme"], meta[name*="theme"]');
+      // Only exact theme/template names — NOT theme-color / color-scheme, which hold colors.
+      const genericThemeMeta = document.querySelector('meta[name="theme"], meta[name="template"]');
       if (genericThemeMeta && genericThemeMeta.content) { theme = genericThemeMeta.content; source = 'meta'; }
     }
   } catch (_) {
     // ignore
+  }
+
+  // Reject color-like values (e.g. a stray theme-color "#1e40af" or "rgb(...)").
+  if (theme && /^(#[0-9a-f]{3,8}|rg(b|ba)\(|hsl(a)?\(|(light|dark)( |$)|light dark)/i.test(String(theme).trim())) {
+    theme = null; source = null;
   }
 
   return { theme, source };

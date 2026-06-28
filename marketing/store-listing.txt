@@ -1,27 +1,70 @@
-Title: Website Framework Detector
+==================================================
+CHROME WEB STORE LISTING (ASO-optimized)
+==================================================
 
-Description:
-Discover which CMS or website builder was used to create any website. Our extension analyzes page structure, scripts, and meta tags to identify platforms like WordPress, Shopify, Wix, Webflow and many others.
+Name (max 75 chars):
+Website Framework Detector – CMS & Tech Stack Checker
 
-Features:
-- Instant framework detection
-- Detailed technical analysis
-- Works on all websites
-- No external servers or data collection
-- Free and open source
+--------------------------------------------------
+Short description (max 132 chars — most important for ranking):
+Find out what any website is built with — WordPress, Shopify, Wix, Webflow & its tech stack. 100% local, no tracking.
 
-How it works:
-1. Install the extension
-2. Navigate to any website
-3. Click the extension icon
-4. See the detected framework
+--------------------------------------------------
+Detailed description:
+Ever wondered "what is this website built with?" Website Framework Detector tells you in one click — the CMS or website builder, the theme, the full front-end tech stack, and the marketing/analytics tools a site loads. A fast, private, free alternative to heavyweight tools — with no account and no data collection.
 
-Privacy Policy:
-This extension does not collect, store, or transmit any personal information. All analysis happens locally in your browser.
+✅ DETECTS CMS & WEBSITE BUILDERS
+WordPress, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, and more — with a real confidence score based on the actual signals found (never a random guess).
 
+✅ TECH STACK CHECKER
+React, Vue, Angular, Svelte, Next.js, Nuxt, Gatsby, Astro, jQuery, Tailwind CSS, Bootstrap, and common back-ends.
+
+✅ THEME DETECTION
+Reveals the active theme/template where the platform exposes it.
+
+✅ MARKETING & ANALYTICS TAGS
+Google Analytics (GA4), Google Tag Manager, Meta Pixel, Hotjar, Microsoft Clarity, HubSpot, LinkedIn, TikTok, Pinterest, Intercom, and more.
+
+✅ BUILT FOR REAL WORK
+• Auto-detects the moment you open it — one click to re-scan
+• Copy a summary or export the full result as JSON
+• Light & dark mode
+• Real brand logos for instant recognition
+
+🔒 PRIVATE BY DESIGN
+Everything runs locally in your browser. No account, no servers, no tracking, no data collection. Only the minimal "activeTab" access, and the extension runs only when you click it — never silently in the background.
+
+PERFECT FOR
+Web developers, designers, SEO specialists, marketers, agencies, and the simply curious who want to know what platform and technologies power any website.
+
+HOW IT WORKS
+1) Open any website  2) Click the icon  3) See the platform, theme, tech stack, and analytics tags.
+
+Open source (GPLv3). Made by Anupam Mondal.
+
+--------------------------------------------------
+Primary keywords (use across title, short + detailed description, naturally):
+what is this website built with, website technology checker, CMS detector,
+tech stack detector, website framework detector, WordPress detector,
+Shopify detector, Wix detector, Webflow detector, built with, what runs,
+website builder checker, theme detector, framework finder
+
+--------------------------------------------------
+Category: Developer Tools
+Language: English (add localized listings: es, pt-BR, de, fr)
+
+--------------------------------------------------
 Links:
 - Chrome Web Store: https://chromewebstore.google.com/detail/website-framework-detector/ebkogcpaeaofidbegiadlfcfhlnaccnn
 - Product page: https://anupammondal.in/chrome-extension/website-framework-detector
+- Companion: SEO Checklist — https://chromewebstore.google.com/detail/jgigdhidhmgikfnccdnehcpgoggmagfh
 
-Support:
-For support or feature requests, please contact support@credifyfast.com or visit https://anupammondal.in/chrome-extension/website-framework-detector
+Support: support@credifyfast.com
+
+--------------------------------------------------
+Screenshot captions (1280x800, add text overlays for keyword + clarity):
+1. "Detect the CMS & builder of any website in one click"
+2. "See the full tech stack — React, Vue, Tailwind & more"
+3. "Theme + marketing tags (GA4, Meta Pixel, Hotjar)"
+4. "Copy or export results as JSON — 100% local & private"
+5. "Light & dark mode, real brand logos"
