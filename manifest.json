@@ -7,12 +7,10 @@
       },
       "default_popup": "popup.html"
    },
-   "content_scripts": [ {
-      "js": [ "themeDetector.js", "techStackDetector.js", "siteInfoDetector.js", "content.js" ],
-      "matches": [ "\u003Call_urls>" ],
-      "run_at": "document_end"
-   } ],
-   "description": "Detects CMS and website builder platforms like WordPress, Shopify, Wix, and Webflow",
+   "background": {
+      "service_worker": "background.js"
+   },
+   "description": "Detect the CMS, builder & tech stack behind any site (WordPress, Shopify, Wix, Webflow…) — 100% local, no tracking.",
    "icons": {
       "128": "icons/icon128.png",
       "16": "icons/icon16.png",
@@ -21,7 +19,6 @@
    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnkBEvW9jNnNpinHDzO/CtKJ4w7Jk9ipEpHwzARDNZVK8ldNe9Tp946eGq4pTjvm+EhmvoRfZ05z+lQp6HRPoEDKTveQhjUEFSYQYfU7JmeElaeaIBIRqwc4uqTVLPYtYEc5KdYvHfc5SCeWQz/DdIf60J5yOY7+bQbofXI1fQM1mNSaGc/jKOsJoPE9cUAVsa+590fgQykS9Zvdc8mWv3aDesO8gjlifRyKUVKStTj3Ac1usJBES221t2MkZw8bq3QFANeqgnjOVZ6Nn81NOXm+zuwDucvSla0knNo9o/aoaoJODH3s35p+oTkotY+oVhLVzV1gidmwBt0QfBsD0cwIDAQAB",
    "manifest_version": 3,
    "name": "Website Framework Detector",
-   "permissions": [ "activeTab" ],
-   "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.2.2"
+   "permissions": [ "activeTab", "scripting" ],
+   "version": "1.3.0"
 }

@@ -1,5 +1,7 @@
-// Site info detector: sitemap, analytics tags, pixels, cdn hints
-// Returns an object with booleans/strings that popup can render with icons.
+// Site info detector: analytics tags, pixels, CDN hints, and sitemap presence.
+// Runs in the page's MAIN world, so runtime globals (window.analytics,
+// window.mixpanel, …) are reliably detectable. Returns a Promise so the sitemap
+// HEAD request is awaited before results are shown (no race with the popup).
 function detectSiteInfo() {
   const info = {
     sitemapUrl: location.origin + '/sitemap.xml',
@@ -9,74 +11,84 @@ function detectSiteInfo() {
     gtm: false,
     fbPixel: false,
     hotjar: false,
-  cloudflare: false,
-  segment: false,
-  mixpanel: false,
-  hubspot: false,
-  linkedin: false,
-  twitter: false,
-  clarity: false,
-  pinterest: false,
-  tiktok: false,
-  bingUET: false,
-  intercom: false
+    cloudflare: false,
+    segment: false,
+    mixpanel: false,
+    hubspot: false,
+    linkedin: false,
+    twitter: false,
+    clarity: false,
+    pinterest: false,
+    tiktok: false,
+    bingUET: false,
+    intercom: false
   };
-  try {
-    fetch(info.sitemapUrl, { method: 'HEAD' })
-      .then(r => { info.sitemap = r.status === 200; })
-      .catch(() => { info.sitemap = false; });
-  } catch(_) {}
+
+  const hasGlobal = (name) => { try { return typeof window[name] !== 'undefined' && window[name] !== null; } catch (_) { return false; } };
+  const srcMatch = (re) => { try { return [...document.scripts].some(s => s.src && re.test(s.src)); } catch (_) { return false; } };
+  const inlineMatch = (re) => { try { return [...document.scripts].some(s => s.textContent && re.test(s.textContent)); } catch (_) { return false; } };
 
   try {
-    const scripts = [...document.scripts];
-    const bodyHTML = document.body ? document.body.innerHTML : '';
+    // Google Analytics / GA4
+    info.ga = srcMatch(/google-analytics\.com\/ga\.js|googletagmanager\.com\/gtag\/js/i) || inlineMatch(/gtag\(|\bga\(/);
+    if (info.ga) info.gaType = srcMatch(/gtag\/js/i) ? 'GA4' : 'Universal/Inline';
 
-    // Google Analytics / GTM
-    info.ga = scripts.some(s => s.src && (s.src.includes('google-analytics.com/ga.js') || s.src.includes('googletagmanager.com/gtag/js'))) || scripts.some(s => s.textContent && (s.textContent.includes('gtag(') || s.textContent.includes('ga(')));
-    if (info.ga) {
-      info.gaType = scripts.some(s => s.src && s.src.includes('gtag/js')) ? 'GA4' : 'Universal/Inline';
-    }
-    info.gtm = scripts.some(s => s.src && s.src.includes('www.googletagmanager.com/gtm.js')) || bodyHTML.includes('GTM-');
+    // Google Tag Manager
+    info.gtm = srcMatch(/googletagmanager\.com\/gtm\.js/i) || inlineMatch(/GTM-[A-Z0-9]+/);
 
-    // Facebook Pixel
-    info.fbPixel = scripts.some(s => s.textContent && s.textContent.includes('fbq(')) || bodyHTML.includes('connect.facebook.net/en_US/fbevents.js');
+    // Facebook / Meta Pixel
+    info.fbPixel = hasGlobal('fbq') || inlineMatch(/fbq\(/) || srcMatch(/connect\.facebook\.net\/.*\/fbevents\.js/i);
 
     // Hotjar
-    info.hotjar = scripts.some(s => s.src && s.src.includes('static.hotjar.com'));
+    info.hotjar = hasGlobal('hj') || srcMatch(/static\.hotjar\.com/i);
 
     // Cloudflare
-    info.cloudflare = !!(window.__cfBeacon) || scripts.some(s => s.src && s.src.includes('cloudflare'));
+    info.cloudflare = hasGlobal('__cfBeacon') || srcMatch(/static\.cloudflareinsights\.com|cloudflare/i);
 
     // Segment
-    info.segment = typeof window.analytics !== 'undefined' || scripts.some(s => s.src && s.src.includes('cdn.segment.com/analytics.js'));
+    info.segment = hasGlobal('analytics') || srcMatch(/cdn\.segment\.com\/analytics\.js/i);
 
     // Mixpanel
-    info.mixpanel = typeof window.mixpanel !== 'undefined' || scripts.some(s => s.src && (s.src.includes('cdn.mxpnl.com') || s.src.includes('mixpanel.com')));
+    info.mixpanel = hasGlobal('mixpanel') || srcMatch(/cdn\.mxpnl\.com|mixpanel\.com/i);
 
     // HubSpot
-    info.hubspot = typeof window._hsq !== 'undefined' || scripts.some(s => s.src && (s.src.includes('js.hs-scripts.com') || s.src.includes('hs-analytics.net')));
+    info.hubspot = hasGlobal('_hsq') || srcMatch(/js\.hs-scripts\.com|hs-analytics\.net/i);
 
     // LinkedIn Insight
-    info.linkedin = typeof window._linkedin_partner_id !== 'undefined' || scripts.some(s => s.src && s.src.includes('snap.licdn.com/li.lms-analytics/insight.min.js'));
+    info.linkedin = hasGlobal('_linkedin_partner_id') || srcMatch(/snap\.licdn\.com\/li\.lms-analytics\/insight\.min\.js/i);
 
-    // Twitter UWT
-    info.twitter = typeof window.twq !== 'undefined' || scripts.some(s => s.src && s.src.includes('static.ads-twitter.com/uwt.js'));
+    // Twitter / X UWT
+    info.twitter = hasGlobal('twq') || srcMatch(/static\.ads-twitter\.com\/uwt\.js/i);
 
     // Microsoft Clarity
-    info.clarity = typeof window.clarity !== 'undefined' || scripts.some(s => s.src && (s.src.includes('clarity.ms') || s.src.includes('www.clarity.ms')));
+    info.clarity = hasGlobal('clarity') || srcMatch(/clarity\.ms/i);
 
     // Pinterest Tag
-    info.pinterest = typeof window.pintrk !== 'undefined' || scripts.some(s => s.src && s.src.includes('s.pinimg.com/ct/core.js'));
+    info.pinterest = hasGlobal('pintrk') || srcMatch(/s\.pinimg\.com\/ct\/core\.js/i);
 
     // TikTok Pixel
-    info.tiktok = typeof window.ttq !== 'undefined' || scripts.some(s => s.src && (s.src.includes('analytics.tiktok.com') || s.src.includes('tiktok.com/i18n/pixel')));
+    info.tiktok = hasGlobal('ttq') || srcMatch(/analytics\.tiktok\.com|tiktok\.com\/i18n\/pixel/i);
 
-    // Bing UET
-    info.bingUET = typeof window.uetq !== 'undefined' || scripts.some(s => s.src && s.src.includes('bat.bing.com/bat.js'));
+    // Bing / Microsoft UET
+    info.bingUET = hasGlobal('uetq') || srcMatch(/bat\.bing\.com\/bat\.js/i);
 
     // Intercom
-    info.intercom = typeof window.Intercom !== 'undefined' || scripts.some(s => s.src && s.src.includes('widget.intercom.io'));
-  } catch(_) {}
+    info.intercom = hasGlobal('Intercom') || srcMatch(/widget\.intercom\.io/i);
+  } catch (_) { /* ignore */ }
 
-  return info;
+  // Await the sitemap HEAD request (with a timeout) so the result is accurate.
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => { if (!settled) { settled = true; resolve(info); } };
+    const timer = setTimeout(finish, 1500);
+    try {
+      fetch(info.sitemapUrl, { method: 'HEAD' })
+        .then(r => { info.sitemap = r.ok; })
+        .catch(() => { info.sitemap = false; })
+        .finally(() => { clearTimeout(timer); finish(); });
+    } catch (_) {
+      clearTimeout(timer);
+      finish();
+    }
+  });
 }

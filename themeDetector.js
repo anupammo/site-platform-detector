@@ -1,4 +1,4 @@
-// Theme detection helper loaded before content.js via manifest
+// Theme detection helper — injected into the page's MAIN world on demand.
 // Returns { theme: string|null, source: string|null }
 function detectTheme(framework) {
   let theme = null;

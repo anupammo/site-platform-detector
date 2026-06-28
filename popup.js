@@ -55,43 +55,71 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   
-  // Detect framework button click
-  detectBtn.addEventListener('click', function() {
-    // Show loading, hide results
+  // Orchestrator executed in the page's MAIN world after the detector files are
+  // injected. It calls the global detector functions and returns one result
+  // object. Async so the sitemap HEAD request inside detectSiteInfo is awaited.
+  async function collectInPage() {
+    const fw = (typeof detectFramework === 'function')
+      ? detectFramework()
+      : { framework: 'Custom/Unknown', iconClass: 'fas fa-question-circle', subtitle: '', colorClass: '', confidence: 0, details: [] };
+
+    const breakdown = {};
+    try {
+      const t = (typeof detectTheme === 'function') ? detectTheme(fw.framework) : { theme: null, source: null };
+      breakdown.theme = t.theme || null;
+      breakdown.themeSource = t.source || null;
+    } catch (_) { breakdown.theme = null; }
+
+    try {
+      const ts = (typeof detectTechStack === 'function') ? detectTechStack() : { list: [], icons: [] };
+      breakdown.techStack = ts.list;
+      breakdown.techStackIcons = ts.icons;
+    } catch (_) { breakdown.techStack = ['HTML', 'CSS', 'JavaScript']; }
+
+    try {
+      breakdown.siteInfo = (typeof detectSiteInfo === 'function') ? await detectSiteInfo() : null;
+    } catch (_) { breakdown.siteInfo = null; }
+
+    return { ...fw, breakdown };
+  }
+
+  // Detect framework button click — inject detectors on demand (activeTab + scripting)
+  detectBtn.addEventListener('click', async function() {
     loading.style.display = 'block';
     resultContainer.style.display = 'none';
-    
-    // Send message to content script to detect framework
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      if (tabs.length > 0) {
-        const tab = tabs[0];
-        if (!isSupportedTabUrl(tab.url)) {
-          showFriendlyError('Unsupported page. Open a normal website tab (http/https) and try again.');
-          return;
-        }
-        let didRespond = false;
-        chrome.tabs.sendMessage(tab.id, {action: 'detectFramework'}, function(response) {
-          didRespond = true;
-          if (chrome.runtime.lastError) {
-            // Show friendly error if content script is not available or port closed
-            showFriendlyError('Could not connect to the page. This may be a browser page, unsupported tab, or the message port closed before a response was received.');
-            return;
-          }
-          if (response && !response.error) {
-            displayResults(response);
-          } else {
-            const msg = response && response.message ? response.message : 'Could not analyze this page';
-            showFriendlyError(msg);
-          }
-        });
-        // Fallback in case callback is never called
-        setTimeout(function() {
-          if (!didRespond) {
-            showFriendlyError('No response from page. This may be a browser page, unsupported tab, or the message port closed before a response was received.');
-          }
-        }, 2000);
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab || !isSupportedTabUrl(tab.url)) {
+        showFriendlyError('Unsupported page. Open a normal website tab (http/https) and try again.');
+        return;
       }
-    });
+
+      const target = { tabId: tab.id };
+
+      // 1) Inject the detector helpers into the page's MAIN world.
+      await chrome.scripting.executeScript({
+        target,
+        world: 'MAIN',
+        files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'frameworkDetector.js']
+      });
+
+      // 2) Run the orchestrator and read back the serialized result.
+      const results = await chrome.scripting.executeScript({
+        target,
+        world: 'MAIN',
+        func: collectInPage
+      });
+
+      const data = results && results[0] && results[0].result;
+      if (data && !data.error) {
+        displayResults(data);
+      } else {
+        showFriendlyError('Could not analyze this page.');
+      }
+    } catch (err) {
+      showFriendlyError('Could not analyze this page. It may be a protected or unsupported tab.');
+    }
   });
   
   // Display results
