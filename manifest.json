@@ -10,6 +10,12 @@
    "background": {
       "service_worker": "background.js"
    },
+   "commands": {
+      "_execute_action": {
+         "suggested_key": { "default": "Alt+Shift+D" },
+         "description": "Open Website Framework Detector"
+      }
+   },
    "description": "Detect the CMS, builder & tech stack behind any site (WordPress, Shopify, Wix, Webflow…) — 100% local, no tracking.",
    "icons": {
       "128": "icons/icon128.png",

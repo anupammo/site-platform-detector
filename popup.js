@@ -25,15 +25,25 @@ const BRAND_SLUG = {
   'Google Fonts': 'googlefonts', 'jQuery': 'jquery', 'Lodash': 'lodash',
   'Three.js': 'threedotjs', 'GSAP': 'greensock', 'Stripe': 'stripe',
   'ASP.NET': 'dotnet', 'Ruby on Rails': 'rubyonrails',
+  // Hosting / CDN / server / backend
+  'Cloudflare': 'cloudflare', 'Vercel': 'vercel', 'Netlify': 'netlify', 'Fastly': 'fastly',
+  'CloudFront': 'amazonwebservices', 'AWS': 'amazonwebservices', 'GitHub Pages': 'github',
+  'Akamai': 'akamai', 'Google Cloud': 'googlecloud', 'Nginx': 'nginx', 'Apache': 'apache',
+  'PHP': 'php',
   // Analytics / tags
   'Google Tag Manager': 'googletagmanager', 'Meta Pixel': 'facebook', 'Hotjar': 'hotjar',
-  'Cloudflare': 'cloudflare', 'HubSpot': 'hubspot', 'LinkedIn Insight': 'linkedin',
+  'HubSpot': 'hubspot', 'LinkedIn Insight': 'linkedin',
   'Twitter Pixel': 'x', 'Pinterest Tag': 'pinterest', 'TikTok Pixel': 'tiktok',
   'Intercom': 'intercom', 'Sitemap': 'sitemap'
 };
 function slugFor(name) {
   if (BRAND_SLUG[name]) return BRAND_SLUG[name];
-  if (String(name).startsWith('Google Analytics')) return 'googleanalytics';
+  // strip a trailing version (e.g. "jQuery 3.7.1" -> "jQuery")
+  const base = String(name).replace(/\s+v?\d[\d.]*$/, '');
+  if (BRAND_SLUG[base]) return BRAND_SLUG[base];
+  if (base.startsWith('Google Analytics')) return 'googleanalytics';
+  if (/^nginx/i.test(base)) return 'nginx';
+  if (/^apache/i.test(base)) return 'apache';
   return '_generic';
 }
 function buildIcon(name, variant) {
@@ -56,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
   [
     'currentUrl', 'loading', 'resultContainer', 'resultTitle', 'resultSubtitle', 'resultIcon',
     'confidenceLevel', 'confidenceValue', 'themeRow', 'themeValue', 'techStackRow', 'techStackChips',
-    'siteInfoRow', 'siteInfoBadges', 'pageInfoRow', 'pageInfoStats', 'pageInfoChecks',
+    'siteInfoRow', 'siteInfoBadges', 'pageInfoRow', 'pageInfoStats',
+    'whyToggle', 'whyChev', 'whyList', 'hostingRow', 'hostingChips', 'securityRow', 'securityChecks',
+    'historyBtn', 'historyPanel', 'historyList', 'historyClear',
     'errorBox', 'errorMsg', 'retryBtn', 'rescanBtn', 'copyBtn',
     'exportBtn', 'themeToggle', 'reviewPrompt', 'reviewYes', 'reviewLater', 'favicon', 'shareBtn'
   ].forEach(id => { els[id] = document.getElementById(id); });
@@ -64,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   els.themeToggle.addEventListener('click', toggleTheme);
   els.shareBtn.addEventListener('click', shareExtension);
+  els.whyToggle.addEventListener('click', toggleWhy);
+  els.historyBtn.addEventListener('click', toggleHistory);
+  els.historyClear.addEventListener('click', clearHistory);
   els.rescanBtn.addEventListener('click', () => detect());
   els.retryBtn.addEventListener('click', () => detect());
   els.copyBtn.addEventListener('click', copyResult);
@@ -147,15 +162,19 @@ async function collectInPage() {
     breakdown.theme = t.theme || null; breakdown.themeSource = t.source || null;
   } catch (_) { breakdown.theme = null; }
   try {
-    const ts = (typeof window.detectTechStack === 'function') ? window.detectTechStack() : { list: [], icons: [] };
+    const ts = (typeof window.detectTechStack === 'function') ? window.detectTechStack() : { list: [], versions: {} };
     breakdown.techStack = ts.list;
-  } catch (_) { breakdown.techStack = ['HTML', 'CSS', 'JavaScript']; }
+    breakdown.techVersions = ts.versions || {};
+  } catch (_) { breakdown.techStack = ['HTML', 'CSS', 'JavaScript']; breakdown.techVersions = {}; }
   try {
     breakdown.siteInfo = (typeof window.detectSiteInfo === 'function') ? await window.detectSiteInfo() : null;
   } catch (_) { breakdown.siteInfo = null; }
   try {
     breakdown.pageInfo = (typeof window.detectPageInfo === 'function') ? window.detectPageInfo() : null;
   } catch (_) { breakdown.pageInfo = null; }
+  try {
+    breakdown.headers = (typeof window.detectHeaders === 'function') ? await window.detectHeaders() : null;
+  } catch (_) { breakdown.headers = null; }
   return { ...fw, breakdown };
 }
 
@@ -169,7 +188,7 @@ async function detect() {
     const target = { tabId: currentTab.id };
     await chrome.scripting.executeScript({
       target, world: 'MAIN',
-      files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'pageInfoDetector.js', 'frameworkDetector.js']
+      files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'pageInfoDetector.js', 'headerDetector.js', 'frameworkDetector.js']
     });
     const results = await chrome.scripting.executeScript({ target, world: 'MAIN', func: collectInPage });
     const data = results && results[0] && results[0].result;
@@ -206,6 +225,15 @@ function displayResults(data) {
   els.resultIcon.replaceWith(buildHeroIcon(data.framework));
   els.resultIcon = document.getElementById('resultIcon');
   els.resultTitle.textContent = data.framework;
+  // Version pill next to the platform name
+  const verEl = els.resultTitle.parentNode.querySelector('.ver-pill');
+  if (verEl) verEl.remove();
+  if (data.version) {
+    const pill = document.createElement('span');
+    pill.className = 'ver-pill';
+    pill.textContent = 'v' + data.version;
+    els.resultTitle.insertAdjacentElement('afterend', pill);
+  }
   els.resultSubtitle.textContent = data.subtitle || '';
 
   // Confidence
@@ -214,16 +242,35 @@ function displayResults(data) {
   els.confidenceLevel.style.width = '0%';
   requestAnimationFrame(() => { els.confidenceLevel.style.width = pct + '%'; });
 
+  // Why this result (matched signals)
+  els.whyList.innerHTML = '';
+  const why = (data.details || []).map(d => d.replace(/^Matched:\s*/, ''));
+  why.forEach(d => { const li = document.createElement('li'); li.textContent = d; els.whyList.appendChild(li); });
+  els.whyToggle.style.display = why.length ? '' : 'none';
+
   // Theme
   const theme = data.breakdown && data.breakdown.theme;
   els.themeValue.textContent = theme || '';
   els.themeRow.classList.toggle('hidden', !theme);
 
-  // Tech stack
+  // Tech stack (with versions where known)
   els.techStackChips.innerHTML = '';
   const tech = (data.breakdown && data.breakdown.techStack) || [];
-  tech.forEach(name => els.techStackChips.appendChild(buildChip(name)));
+  const versions = (data.breakdown && data.breakdown.techVersions) || {};
+  tech.forEach(name => {
+    const label = versions[name] ? `${name} ${versions[name]}` : name;
+    els.techStackChips.appendChild(buildChip(label, name));
+  });
   els.techStackRow.classList.toggle('hidden', tech.length === 0);
+
+  // Hosting & server
+  els.hostingChips.innerHTML = '';
+  const host = hostingToList(data.breakdown && data.breakdown.headers);
+  host.forEach(name => els.hostingChips.appendChild(buildChip(name)));
+  els.hostingRow.classList.toggle('hidden', host.length === 0);
+
+  // Security headers
+  renderSecurity(data.breakdown && data.breakdown.headers);
 
   // Analytics & tags
   els.siteInfoBadges.innerHTML = '';
@@ -237,6 +284,57 @@ function displayResults(data) {
   els.loading.classList.add('hidden');
   els.errorBox.classList.add('hidden');
   els.resultContainer.classList.remove('hidden');
+
+  setBadge(data.framework);
+  saveHistory(data);
+}
+
+function hostingToList(h) {
+  if (!h || !h.available) return [];
+  const out = [...(h.hosting || [])];
+  if (h.server) {
+    if (/nginx/i.test(h.server)) out.push('Nginx');
+    else if (/apache/i.test(h.server)) out.push('Apache');
+    else if (/iis|microsoft/i.test(h.server)) out.push('IIS');
+    else if (/litespeed/i.test(h.server)) out.push('LiteSpeed');
+  }
+  if (h.backend) {
+    if (/php/i.test(h.backend)) out.push('PHP');
+    else if (/asp\.net|aspnet/i.test(h.backend)) out.push('ASP.NET');
+    else if (/express/i.test(h.backend)) out.push('Express');
+  }
+  return [...new Set(out)];
+}
+
+function renderSecurity(h) {
+  els.securityChecks.innerHTML = '';
+  if (!h || !h.available) { els.securityRow.classList.add('hidden'); return; }
+  const s = h.security || {};
+  const items = [
+    { label: 'HTTPS strict (HSTS)', ok: s.hsts },
+    { label: 'CSP', ok: s.csp },
+    { label: 'X-Frame-Options', ok: s.xfo },
+    { label: 'X-Content-Type-Options', ok: s.xcto },
+    { label: 'Referrer-Policy', ok: s.referrer },
+    { label: 'Permissions-Policy', ok: s.permissions }
+  ];
+  items.forEach(c => els.securityChecks.appendChild(buildCheck(c.label, c.ok)));
+  els.securityRow.classList.remove('hidden');
+}
+
+function buildCheck(label, ok) {
+  const chip = document.createElement('span');
+  chip.className = 'check ' + (ok ? 'ok' : 'no');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'icon');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', ok ? '#i-check' : '#i-x');
+  svg.appendChild(use);
+  chip.appendChild(svg);
+  const span = document.createElement('span');
+  span.textContent = label;
+  chip.appendChild(span);
+  return chip;
 }
 
 function buildHeroIcon(name) {
@@ -244,24 +342,23 @@ function buildHeroIcon(name) {
   tile.id = 'resultIcon';
   return tile;
 }
-function buildChip(name) {
+function buildChip(label, logoName) {
   const chip = document.createElement('span');
   chip.className = 'chip';
-  chip.appendChild(buildIcon(name, 'chip'));
-  const label = document.createElement('span');
-  label.textContent = name;
-  chip.appendChild(label);
+  chip.appendChild(buildIcon(logoName || label, 'chip'));
+  const span = document.createElement('span');
+  span.textContent = label;
+  chip.appendChild(span);
   return chip;
 }
 
 function renderPageInfo(info) {
   els.pageInfoStats.innerHTML = '';
-  els.pageInfoChecks.innerHTML = '';
   if (!info) { els.pageInfoRow.classList.add('hidden'); return; }
 
   const stats = [
-    { label: 'Words', value: info.words.toLocaleString() },
-    { label: 'Read time', value: info.readingTime + ' min' },
+    { label: 'Words', value: (info.words || 0).toLocaleString() },
+    { label: 'Read time', value: (info.readingTime || 0) + ' min' },
     { label: 'Images', value: info.images + (info.imagesMissingAlt ? ' (' + info.imagesMissingAlt + ' no alt)' : '') },
     { label: 'Links', value: info.links },
     { label: 'Scripts', value: info.scripts },
@@ -274,30 +371,6 @@ function renderPageInfo(info) {
     const l = document.createElement('div'); l.className = 'stat-lbl'; l.textContent = s.label;
     cell.appendChild(v); cell.appendChild(l);
     els.pageInfoStats.appendChild(cell);
-  });
-
-  const checks = [
-    { label: 'HTTPS', ok: info.https },
-    { label: 'Mobile-friendly', ok: info.mobileFriendly },
-    { label: 'Meta description', ok: info.hasDescription },
-    { label: 'Canonical', ok: info.canonical },
-    { label: 'Social cards', ok: info.socialCards },
-    { label: 'Structured data', ok: info.structuredData },
-    { label: 'Single H1', ok: info.h1 === 1 }
-  ];
-  checks.forEach(c => {
-    const chip = document.createElement('span');
-    chip.className = 'check ' + (c.ok ? 'ok' : 'no');
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'icon');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', c.ok ? '#i-check' : '#i-x');
-    svg.appendChild(use);
-    chip.appendChild(svg);
-    const label = document.createElement('span');
-    label.textContent = c.label;
-    chip.appendChild(label);
-    els.pageInfoChecks.appendChild(chip);
   });
 
   els.pageInfoRow.classList.remove('hidden');
@@ -333,9 +406,13 @@ function buildExport() {
     url: currentHost,
     detectedAt: new Date().toISOString(),
     framework: lastResult.framework,
+    version: lastResult.version || null,
     confidence: lastResult.confidence,
     theme: b.theme || null,
     techStack: b.techStack || [],
+    techVersions: b.techVersions || {},
+    hosting: hostingToList(b.headers),
+    securityHeaders: (b.headers && b.headers.available) ? b.headers.security : null,
     analyticsAndTags: siteInfoToList(b.siteInfo),
     pageInfo: b.pageInfo || null,
     stats: { scripts: lastResult.scriptsFound, metaTags: lastResult.metaTags, links: lastResult.linksFound }
@@ -376,6 +453,81 @@ function flash(btn, msg) {
   label.textContent = ' ' + msg;
   btn.classList.add('copied');
   setTimeout(() => { label.textContent = original; btn.classList.remove('copied'); }, 1400);
+}
+
+// ---------- Why expander ----------
+function toggleWhy() {
+  const open = els.whyToggle.getAttribute('aria-expanded') === 'true';
+  els.whyToggle.setAttribute('aria-expanded', String(!open));
+  els.whyList.classList.toggle('hidden', open);
+}
+
+// ---------- Toolbar badge ----------
+function setBadge(framework) {
+  try {
+    if (!chrome.action || !chrome.action.setBadgeText) return;
+    const map = {
+      'WordPress': 'WP', 'WooCommerce': 'Woo', 'Shopify': 'Shop', 'Wix': 'Wix', 'Webflow': 'WF',
+      'Squarespace': 'Sqs', 'Joomla': 'Joo', 'Drupal': 'Dru', 'Magento': 'Mag', 'PrestaShop': 'PS',
+      'BigCommerce': 'BC', 'Ghost': 'Gh', 'Blogger': 'Bl', 'HubSpot CMS': 'HS', 'Framer': 'Fr',
+      'Craft CMS': 'Cft', 'Duda': 'Dud', 'Custom/Unknown': '?'
+    };
+    const text = map[framework] || framework.slice(0, 3);
+    const tabId = currentTab && currentTab.id;
+    chrome.action.setBadgeBackgroundColor({ color: '#06038D', ...(tabId ? { tabId } : {}) });
+    chrome.action.setBadgeText({ text, ...(tabId ? { tabId } : {}) });
+  } catch (_) {}
+}
+
+// ---------- Detection history (local, private) ----------
+const HISTORY_MAX = 25;
+function saveHistory(data) {
+  try {
+    chrome.storage.local.get(['history', 'historyOff'], (s) => {
+      if (s.historyOff) return;
+      const list = Array.isArray(s.history) ? s.history : [];
+      list.unshift({ host: currentHost, framework: data.framework, version: data.version || '', ts: Date.now() });
+      chrome.storage.local.set({ history: list.slice(0, HISTORY_MAX) });
+    });
+  } catch (_) {}
+}
+function toggleHistory() {
+  const willShow = els.historyPanel.classList.contains('hidden');
+  if (willShow) renderHistory();
+  els.historyPanel.classList.toggle('hidden', !willShow);
+}
+function renderHistory() {
+  chrome.storage.local.get(['history'], (s) => {
+    const list = Array.isArray(s.history) ? s.history : [];
+    els.historyList.innerHTML = '';
+    if (!list.length) {
+      const p = document.createElement('div'); p.className = 'hist-empty';
+      p.textContent = 'No scans yet. Detected sites will appear here.';
+      els.historyList.appendChild(p);
+      return;
+    }
+    list.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'hist-item';
+      const tile = document.createElement('span');
+      tile.className = 'mono-mini';
+      const img = document.createElement('img');
+      img.src = 'icons/brands/' + slugFor(item.framework) + '.svg';
+      img.alt = '';
+      img.addEventListener('error', () => { img.src = 'icons/brands/_generic.svg'; }, { once: true });
+      tile.appendChild(img);
+      const name = document.createElement('span');
+      name.textContent = item.framework + (item.version ? ' ' + item.version : '');
+      const host = document.createElement('span');
+      host.className = 'hist-host';
+      host.textContent = item.host;
+      row.appendChild(tile); row.appendChild(name); row.appendChild(host);
+      els.historyList.appendChild(row);
+    });
+  });
+}
+function clearHistory() {
+  chrome.storage.local.set({ history: [] }, renderHistory);
 }
 
 // ---------- Share (outreach) ----------

@@ -24,8 +24,10 @@ A major reliability + capability release:
 - **Accurate detection engine** — rebuilt on on-demand `chrome.scripting` injection that reads the page's real runtime globals (`window.Shopify`, `wp`, `Webflow`, …); previous versions couldn't see these. Confidence is now a **real weighted score**, never random.
 - **17 platforms** (up from 7) — added WooCommerce, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda — with a *prefer-the-specific-platform* rule (e.g. shows **WooCommerce**, not just WordPress).
 - **Expanded tech stack** — Preact, SolidJS, Qwik, Ember, Remix, Three.js, GSAP, Stripe, Google Fonts, Font Awesome, plus SSGs (Astro, Hugo, Jekyll, Eleventy).
-- **New Page info panel** — word count, reading time, images & missing-alt, plus health checks (HTTPS, mobile-friendly, meta description, canonical, social cards, structured data, single H1).
-- **Redesigned UI** — auto-detect on open, real brand logos, light/dark mode, copy + export JSON, re-scan, **share** button, and the current site's favicon in the URL bar.
+- **Hosting, CDN, server & security headers** — read from the page's own response headers (same-origin, no new permissions): Cloudflare, Vercel, Netlify, Nginx, etc., plus HSTS/CSP/X-Frame-Options and more.
+- **Versions, "Why this result" expander, and local detection history** — transparency and recall that competitors gate behind paid accounts.
+- **Page info panel** — word count, reading time, images & missing-alt, headings, links, scripts.
+- **Redesigned UI** — auto-detect on open, real brand logos, toolbar badge, keyboard shortcut (`Alt+Shift+D`), light/dark mode, copy + export JSON, re-scan, **share** button, and the current site's favicon in the URL bar.
 - **Privacy hardened** — removed the Font Awesome CDN; all icons/logos are now bundled locally.
 
 See the full [changelog](CHANGELOG.md).
@@ -59,10 +61,15 @@ Most "what is this site built with" tools either phone home, require an account,
 - 🧩 **Tech stack** — React, Preact, Vue, Angular, Svelte, Solid, Qwik, Ember, Next.js, Nuxt, Remix, Gatsby, Astro, Hugo, Jekyll, Eleventy, jQuery, Tailwind, Bootstrap, Three.js, GSAP, Stripe, and more.
 - 🎨 **Theme detection** — extracts the active theme/template where the platform exposes it.
 - 📈 **Marketing & analytics tags** — Google Analytics/GA4, GTM, Meta Pixel, Hotjar, Clarity, Segment, Mixpanel, HubSpot, TikTok, LinkedIn, Pinterest, Intercom, and more.
-- 📄 **Page info & health** — word count, reading time, image/alt audit, plus HTTPS, mobile-friendly, meta description, canonical, social cards, structured data, and single-H1 checks.
+- 🖥️ **Hosting, CDN & server** — Cloudflare, Vercel, Netlify, Fastly, CloudFront, GitHub Pages, Akamai, Nginx, Apache, plus back-end hints (PHP, ASP.NET) — read from response headers, no extra permissions.
+- 🛡️ **Security headers** — at-a-glance HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+- 🏷️ **Versions where exposed** — e.g. WordPress 6.5, jQuery 3.7, Angular 17.
+- 📄 **Page info** — word count, reading time, image/alt audit, headings, links, scripts.
+- 🧠 **"Why this result"** — expand to see exactly which signals matched.
+- 🕘 **Detection history** — your recent scans, stored locally and clearable (never uploaded).
 - 📊 **Real confidence scoring** — score reflects how many independent signals matched (never a random number).
 - 🖼️ **Real brand logos** — instantly recognizable, bundled locally.
-- ⚡ **Auto-detect on open** — results appear the moment you open the popup; one click to re-scan.
+- ⚡ **Auto-detect on open** + **toolbar badge** + keyboard shortcut (`Alt+Shift+D`); one click to re-scan.
 - 📋 **Copy & export** — copy a summary or download the full result as JSON.
 - 🔗 **Share** — share the extension via the native share sheet (or copy link).
 - 🌙 **Dark mode** — follows your system theme, with a manual toggle.
@@ -109,10 +116,11 @@ Detection is **triggered on demand** from the popup using `chrome.scripting`, so
 popup.html / popup.js     ← UI + triggers detection on click
   └─ chrome.scripting      ← injects detectors into the active tab (MAIN world)
        ├─ frameworkDetector ← CMS / builder / e-commerce platform
-       ├─ techStackDetector ← frameworks & libraries
+       ├─ techStackDetector ← frameworks & libraries (+ versions)
        ├─ themeDetector      ← active theme/template
        ├─ siteInfoDetector   ← analytics, pixels, sitemap
-       └─ pageInfoDetector   ← page health: words, images, SEO checks
+       ├─ pageInfoDetector   ← page stats: words, images, links
+       └─ headerDetector     ← hosting/CDN, server, security headers (same-origin)
 ```
 
 ---
@@ -143,7 +151,8 @@ cd site-platform-detector
 | `techStackDetector.js` | Frameworks & libraries |
 | `themeDetector.js` | Active theme / template extraction |
 | `siteInfoDetector.js` | Analytics, pixels, sitemap |
-| `pageInfoDetector.js` | Page health: words, images, SEO checks |
+| `pageInfoDetector.js` | Page stats: words, images, links |
+| `headerDetector.js` | Hosting/CDN, server, security headers (same-origin fetch) |
 | `background.js` | Service worker (lifecycle, install page) |
 | `icons/brands/` | Bundled brand logos (recolored Simple Icons, CC0) |
 

@@ -52,12 +52,14 @@ function detectTechStack() {
   add('ASP.NET', q('input[name="__VIEWSTATE"]'));
   add('Ruby on Rails', q('meta[name="csrf-param"], meta[name="csrf-token"], [data-turbo], [data-turbolinks]'));
 
+  // Best-effort versions (shown next to the chip when available).
+  const versions = {};
+  try { if (window.jQuery && window.jQuery.fn && window.jQuery.fn.jquery) versions['jQuery'] = window.jQuery.fn.jquery; } catch (_) {}
+  try { const a = document.querySelector('[ng-version]'); if (a) versions['Angular'] = a.getAttribute('ng-version'); } catch (_) {}
+  try { if (window.bootstrap && window.bootstrap.Tooltip && window.bootstrap.Tooltip.VERSION) versions['Bootstrap'] = window.bootstrap.Tooltip.VERSION; } catch (_) {}
+
   const list = Array.from(stack);
-  const faMap = {
-    'HTML': 'fa-brands fa-html5', 'CSS': 'fa-brands fa-css3-alt', 'JavaScript': 'fa-brands fa-square-js'
-  };
-  const icons = list.map(name => ({ name, icon: faMap[name] || 'fa-solid fa-circle' }));
-  return { list, icons };
+  return { list, versions };
 }
 
 // Expose for on-demand MAIN-world injection.

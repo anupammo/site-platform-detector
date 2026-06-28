@@ -12,8 +12,14 @@ A major reliability and capability release.
 - **9 new platforms** — WooCommerce, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda (now 17 total).
 - **"Prefer the specific platform"** rule — e.g. a WooCommerce store is reported as WooCommerce rather than just WordPress.
 - **Expanded tech stack** — Preact, SolidJS, Qwik, Ember, Remix, Three.js, GSAP, Stripe, Google Fonts, Font Awesome, and static-site generators (Astro, Hugo, Jekyll, Eleventy).
-- **Page info panel** — word count, reading time, image & missing-alt audit, headings/links/scripts counts, plus health checks: HTTPS, mobile-friendly, meta description, canonical, social cards, structured data, single H1.
-- **Real brand logos** bundled locally for platforms and tech.
+- **Hosting / CDN / server / back-end detection** via response headers (Cloudflare, Vercel, Netlify, Fastly, CloudFront, GitHub Pages, Akamai, Nginx, Apache, PHP, ASP.NET) — read same-origin in the page context, so **no new permissions**.
+- **Security headers panel** — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+- **Version detection** — platform version from the generator meta (e.g. WordPress 6.5) and library versions (jQuery, Angular, Bootstrap).
+- **"Why this result"** expander showing the matched signals behind each detection.
+- **Detection history** — recent scans stored locally, viewable and clearable from the popup (never uploaded).
+- **Toolbar badge** with the detected platform, and an `Alt+Shift+D` keyboard shortcut to open the popup.
+- **Page info panel** — word count, reading time, image & missing-alt audit, headings/links/scripts counts.
+- **Real brand logos** bundled locally for platforms, tech, and hosting providers.
 - **Auto-detect on popup open**, **Re-scan**, **Copy summary**, **Export JSON**.
 - **Share** button (Web Share API with copy-link fallback).
 - **Dark mode** (system-aware + manual toggle).

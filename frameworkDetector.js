@@ -220,6 +220,16 @@ function detectFramework() {
     linksFound: document.querySelectorAll('link').length
   };
 
+  // Best-effort version from the generator meta tag (WordPress, Drupal, …).
+  const versionFromGenerator = () => {
+    try {
+      const m = document.querySelector('meta[name="generator"], meta[name="Generator"]');
+      const c = (m && m.content) || '';
+      const match = c.match(/(\d+(?:\.\d+){1,2})/);
+      return match ? match[1] : '';
+    } catch (_) { return ''; }
+  };
+
   if (best && best.score >= 20) {
     return {
       framework: best.framework,
@@ -227,6 +237,7 @@ function detectFramework() {
       subtitle: best.subtitle,
       colorClass: best.colorClass,
       confidence: Math.min(98, best.score),
+      version: versionFromGenerator(),
       details: best.matched.map(m => `Matched: ${m}`),
       ...realStats
     };
