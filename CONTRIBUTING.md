@@ -116,4 +116,8 @@ what was detected.
 ## Security issues
 
 **Do not** open a public issue for security vulnerabilities. Follow our
+<<<<<<< HEAD
 [Security Policy](SECURITY.md) and report privately to **support@credifyfast.com**.
+=======
+[Security Policy](SECURITY.md) and report privately to **support@credifyfast.com**.
+>>>>>>> 2f7be1fbe98762e0ed803377809f292517720734
