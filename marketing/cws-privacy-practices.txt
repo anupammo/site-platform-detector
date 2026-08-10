@@ -1,0 +1,76 @@
+CHROME WEB STORE - PRIVACY PRACTICES TAB
+Copy/paste answers for the "Unable to publish" checklist.
+==================================================
+
+1) PERMISSION JUSTIFICATION: scripting
+--------------------------------------------------
+This extension uses chrome.scripting.executeScript to run its own local
+detector scripts (themeDetector.js, techStackDetector.js,
+siteInfoDetector.js, pageInfoDetector.js, headerDetector.js,
+frameworkDetector.js) in the current tab, and only when the user
+explicitly opens the extension popup or presses its keyboard shortcut
+(Alt+Shift+D). This is required to read the page's own publicly visible
+markup - HTML, script tags, meta tags, and global JS objects such as
+window.wp or window.Shopify - in order to identify which CMS, site
+builder, or front-end framework the site is built with. No content is
+collected, stored remotely, or transmitted anywhere; results are shown
+only in the popup for that single visit. Scripting is combined with
+activeTab (no host permissions), so the extension can only act on the
+tab the user is actively viewing and only in response to a direct user
+action.
+
+2) PERMISSION JUSTIFICATION: storage
+--------------------------------------------------
+The storage permission (chrome.storage.local) is used only to save
+user preferences and data on the user's own device: the selected
+light/dark theme, a private local history of up to 25 previously
+scanned sites (host, detected platform, and timestamp) so users can
+review past scans, and small internal flags that control a one-time
+"leave a review" prompt shown after 5 successful detections. None of
+this data is synced, sent to the developer, or shared with any third
+party - it stays in local browser storage and can be cleared any time
+from the extension's history panel or by removing the extension.
+
+3) SINGLE PURPOSE DESCRIPTION (if also requested)
+--------------------------------------------------
+Detects the CMS, website builder, and front-end tech stack of the
+website open in the user's active tab, entirely on-device.
+
+==================================================
+DATA USAGE TAB - "What user data do you plan to collect?"
+==================================================
+Check ONLY:
+  [x] Website content
+      (the page's HTML/markup, script tags, meta tags, and response
+      headers, read locally to run the detection - never transmitted)
+
+Leave UNCHECKED:
+  [ ] Personally identifiable information
+  [ ] Health information
+  [ ] Financial and payment information
+  [ ] Authentication information
+  [ ] Personal communications
+  [ ] Location
+  [ ] Web history
+  [ ] User activity
+
+For "Website content", when asked how it's used, select/describe:
+  - Purpose: "App functionality" (core feature - platform/tech-stack
+    detection)
+  - Is it transmitted off the device? No
+  - Is it sold to third parties? No
+
+Certification checkboxes - all TRUE for this extension:
+  [x] I do not sell or transfer user data to third parties outside of
+      the approved use cases
+  [x] I do not use or transfer user data for purposes that are
+      unrelated to my item's single purpose
+  [x] I do not use or transfer user data to determine creditworthiness
+      or for lending purposes
+
+Privacy policy URL to submit:
+  Chrome Web Store requires a live, public URL (not a file upload) in
+  the "Privacy policy" field on the Privacy practices tab. Publish the
+  updated marketing/privacy.html to wherever it's currently hosted on
+  anupammondal.in and submit that page's URL. A plain-text copy for
+  your own records/other stores is at marketing/privacy-policy.txt.
