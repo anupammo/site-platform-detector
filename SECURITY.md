@@ -57,4 +57,8 @@ Out of scope:
 
 We follow **coordinated disclosure**: please give us a reasonable opportunity to
 release a fix before any public disclosure. We will keep you informed throughout
+<<<<<<< HEAD
 the process. Thank you for helping keep users safe. 🔒
+=======
+the process. Thank you for helping keep users safe. 🔒
+>>>>>>> 2f7be1fbe98762e0ed803377809f292517720734
