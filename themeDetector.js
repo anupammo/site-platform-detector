@@ -1,81 +1,77 @@
-// Theme detection helper — injected into the page's MAIN world on demand.
-// Returns { theme: string|null, source: string|null }
-function detectTheme(framework) {
-  let theme = null;
-  let source = null;
+// Theme detector — finds the theme/template of the detected platform.
+// Returns { theme, source, detail }.
+(function () {
+  const W = window.__wfd = window.__wfd || {};
 
-  try {
-    if (framework === 'WordPress') {
-      const themeLink = document.querySelector('link[href*="/wp-content/themes/"]');
-      if (themeLink && themeLink.href) {
-        const match = themeLink.href.match(/\/wp-content\/themes\/([^\/]+)\//);
-        if (match && match[1]) { theme = match[1]; source = 'link'; }
-      }
-      if (!theme) {
-        const themeMeta = document.querySelector('meta[name="theme"], meta[name="template"]');
-        if (themeMeta && themeMeta.content) { theme = themeMeta.content; source = 'meta'; }
-      }
-    } else if (framework === 'Shopify') {
-      const themeMeta = document.querySelector('meta[name="shopify-checkout-authorization-theme"], meta[name="shopify-theme"]');
-      if (themeMeta && themeMeta.content) { theme = themeMeta.content; source = 'meta'; }
-      if (!theme) {
-        const themeScript = document.querySelector('script[src*="/shopify/"]');
-        if (themeScript && themeScript.src) {
-          const match = themeScript.src.match(/themes\/([^\/]+)\//);
-          if (match && match[1]) { theme = match[1]; source = 'script'; }
+  // First capture group of the first asset URL that matches and isn't skipped.
+  function fromAssets(re, skip) {
+    const U = W.util;
+    const urls = U.snapshot().assets;
+    for (const u of urls) {
+      if (skip && skip.test(u)) continue;
+      const m = u.match(re);
+      if (m && m[1] && !(skip && skip.test(m[1]))) return m.slice(1).filter(Boolean).join('/');
+    }
+    return null;
+  }
+
+  const prettify = (s) => { try { return decodeURIComponent(s); } catch (_) { return s; } };
+
+  W.detectTheme = function detectTheme(framework) {
+    const U = W.util;
+    let theme = null, source = null, detail = '';
+
+    try {
+      if (framework === 'WordPress' || framework === 'WooCommerce') {
+        // WP adds body classes for the active (child) theme; fall back to asset paths.
+        const cls = document.body ? [...document.body.classList] : [];
+        const child = cls.find(c => c.startsWith('wp-child-theme-'));
+        const main = cls.find(c => c.startsWith('wp-theme-'));
+        const fromPath = fromAssets(/\/wp-content\/themes\/([^\/?#]+)\//i);
+        if (child) { theme = child.replace('wp-child-theme-', ''); source = 'body class'; if (main) detail = 'child theme of ' + main.replace('wp-theme-', ''); }
+        else if (fromPath) { theme = fromPath; source = 'asset path'; }
+        else if (main) { theme = main.replace('wp-theme-', ''); source = 'body class'; }
+      } else if (framework === 'Shopify') {
+        const name = U.get('Shopify.theme.name');
+        if (name) {
+          theme = String(name); source = 'Shopify.theme';
+          const storeId = U.get('Shopify.theme.theme_store_id');
+          detail = storeId ? `Theme Store #${storeId}` : 'custom or unlisted theme';
         }
+        const shop = U.get('Shopify.shop');
+        if (shop) detail = (detail ? detail + ' · ' : '') + shop;
+      } else if (framework === 'Joomla') {
+        theme = fromAssets(/\/media\/templates\/site\/([^\/]+)\//i) || fromAssets(/\/templates\/([^\/]+)\//i, /^system$|\/templates\/system\//i);
+        if (theme) source = 'asset path';
+      } else if (framework === 'Drupal') {
+        theme = fromAssets(/\/themes\/(?:custom\/|contrib\/)?([^\/]+)\//i, /\/core\//i);
+        if (theme) source = 'asset path';
+      } else if (framework === 'Magento') {
+        theme = fromAssets(/\/static\/(?:version\d+\/)?frontend\/([^\/]+)\/([^\/]+)\//i);
+        if (theme) source = 'asset path';
+      } else if (framework === 'PrestaShop') {
+        theme = fromAssets(/\/themes\/([^\/]+)\/assets\//i);
+        if (theme) source = 'asset path';
+      } else if (framework === 'OpenCart') {
+        theme = fromAssets(/\/catalog\/view\/theme\/([^\/]+)\//i);
+        if (theme) source = 'asset path';
+      } else if (framework === 'BigCommerce') {
+        const t = U.get('BCData.theme_name') || null;
+        if (t) { theme = String(t); source = 'BCData'; }
       }
-    } else if (framework === 'Wix') {
-      const themeMeta = document.querySelector('meta[name*="wix-theme"]');
-      if (themeMeta && themeMeta.content) { theme = themeMeta.content; source = 'meta'; }
-    } else if (framework === 'Squarespace') {
-      const themeMeta = document.querySelector('meta[name*="squarespace-theme"]');
-      if (themeMeta && themeMeta.content) { theme = themeMeta.content; source = 'meta'; }
+
       if (!theme) {
-        try {
-          const sq = (window.Static && window.Static.SQUARESPACE_CONTEXT) || window.Squarespace || {};
-          const tid = sq.templateId || (sq.template && (sq.template.id || sq.template.identifier));
-          if (tid) { theme = String(tid); source = 'js'; }
-        } catch(_){}
+        // Only exact theme/template names — NOT theme-color / color-scheme.
+        const meta = document.querySelector('meta[name="theme"], meta[name="template"]');
+        if (meta && meta.content) { theme = meta.content; source = 'meta'; }
       }
-    } else if (framework === 'Joomla') {
-      const link = document.querySelector('link[href*="/templates/"]');
-      if (link && link.href) {
-        const m = link.href.match(/\/templates\/([^\/]+)\//);
-        if (m && m[1]) { theme = m[1]; source = 'link'; }
-      }
-    } else if (framework === 'Drupal') {
-      const link = document.querySelector('link[href*="/themes/"]') || document.querySelector('link[href*="/sites/"]');
-      if (link && link.href) {
-        let m = link.href.match(/\/themes\/([^\/]+)\//);
-        if (!m) m = link.href.match(/\/sites\/[^\/]+\/themes\/([^\/]+)\//);
-        if (m && m[1]) { theme = m[1]; source = 'link'; }
-      }
-    } else if (framework === 'Magento' || framework === 'Adobe Commerce') {
-      // Magento 2 static asset path: /static/frontend/Vendor/theme/
-      const link = Array.from(document.querySelectorAll('link[href]')).find(l => /\/static\/frontend\//.test(l.href));
-      if (link && link.href) {
-        const m = link.href.match(/\/static\/frontend\/([^\/]+)\/([^\/]+)\//);
-        if (m && m[1] && m[2]) { theme = `${m[1]}/${m[2]}`; source = 'link'; }
-      }
+    } catch (_) { /* ignore */ }
+
+    if (theme) theme = prettify(theme);
+    // Reject color-like values (e.g. "#1e40af", "rgb(...)", "light dark").
+    if (theme && /^(#[0-9a-f]{3,8}|rgba?\(|hsla?\(|(light|dark)( |$)|light dark)/i.test(String(theme).trim())) {
+      theme = null; source = null;
     }
-
-    if (!theme) {
-      // Only exact theme/template names — NOT theme-color / color-scheme, which hold colors.
-      const genericThemeMeta = document.querySelector('meta[name="theme"], meta[name="template"]');
-      if (genericThemeMeta && genericThemeMeta.content) { theme = genericThemeMeta.content; source = 'meta'; }
-    }
-  } catch (_) {
-    // ignore
-  }
-
-  // Reject color-like values (e.g. a stray theme-color "#1e40af" or "rgb(...)").
-  if (theme && /^(#[0-9a-f]{3,8}|rg(b|ba)\(|hsl(a)?\(|(light|dark)( |$)|light dark)/i.test(String(theme).trim())) {
-    theme = null; source = null;
-  }
-
-  return { theme, source };
-}
-
-// Expose for on-demand MAIN-world injection.
-if (typeof window !== "undefined") window.detectTheme = detectTheme;
+    return { theme, source, detail };
+  };
+})();

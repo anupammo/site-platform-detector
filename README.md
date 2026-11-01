@@ -17,20 +17,17 @@ Website Framework Detector is a lightweight Chrome extension that identifies whi
 
 ---
 
-## 🆕 What's new in v1.3
+## 🆕 What's new in v1.4
 
-A major reliability + capability release:
+- **More accurate on real sites.** A full audit fixed WordPress/Drupal sites showing as PrestaShop, WordPress sites with HubSpot forms showing as "HubSpot CMS", Django sites showing as Magento, Laravel sites showing as Rails, and more. Every fix has a regression test.
+- **44 platforms** (up from 17). New: OpenCart, Shopware, Salesforce Commerce Cloud, TYPO3, Sitecore, AEM, Odoo, Weebly, GoDaddy, Tilda, Jimdo, Kajabi, Teachable, Substack, Notion, Docusaurus, GitBook and more.
+- **Plugins & apps.** Every WordPress plugin the page loads (with versions), page builders, SEO plugins and Shopify apps.
+- **Widgets & services.** Payments (Stripe, PayPal, Razorpay…), live chat, cookie consent, captcha, maps, video and monitoring tools.
+- **Tracking IDs.** GA4, GTM, Google Ads and Meta Pixel IDs. Click a chip to copy the ID.
+- **Site health.** Flags `noindex`, a robots.txt that blocks Google, mixed content, missing title/description/H1, end-of-life PHP and more.
+- **Markdown report + "Report a wrong result"** button.
 
-- **Accurate detection engine** — rebuilt on on-demand `chrome.scripting` injection that reads the page's real runtime globals (`window.Shopify`, `wp`, `Webflow`, …); previous versions couldn't see these. Confidence is now a **real weighted score**, never random.
-- **17 platforms** (up from 7) — added WooCommerce, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda — with a *prefer-the-specific-platform* rule (e.g. shows **WooCommerce**, not just WordPress).
-- **Expanded tech stack** — Preact, SolidJS, Qwik, Ember, Remix, Three.js, GSAP, Stripe, Google Fonts, Font Awesome, plus SSGs (Astro, Hugo, Jekyll, Eleventy).
-- **Hosting, CDN, server & security headers** — read from the page's own response headers (same-origin, no new permissions): Cloudflare, Vercel, Netlify, Nginx, etc., plus HSTS/CSP/X-Frame-Options and more.
-- **Versions, "Why this result" expander, and local detection history** — transparency and recall that competitors gate behind paid accounts.
-- **Page info panel** — word count, reading time, images & missing-alt, headings, links, scripts.
-- **Redesigned UI** — auto-detect on open, real brand logos, toolbar badge, keyboard shortcut (`Alt+Shift+D`), light/dark mode, copy + export JSON, re-scan, **share** button, and the current site's favicon in the URL bar.
-- **Privacy hardened** — removed the Font Awesome CDN; all icons/logos are now bundled locally.
-
-See the full [changelog](CHANGELOG.md).
+See the full [changelog](CHANGELOG.md) and the [roadmap](ROADMAP.md).
 
 ---
 
@@ -57,7 +54,10 @@ Most "what is this site built with" tools either phone home, require an account,
 
 ## Features
 
-- 🔎 **Platform detection (17)** — WordPress, WooCommerce, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda.
+- 🔎 **Platform detection (44)** — WordPress, WooCommerce, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, Magento, PrestaShop, BigCommerce, OpenCart, Shopware, Salesforce Commerce Cloud, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda, TYPO3, Concrete CMS, Sitecore, Adobe Experience Manager, Odoo, Weebly, GoDaddy, Tilda, Jimdo, Strikingly, Hostinger, Kajabi, Teachable, Thinkific, Substack, Medium, Tumblr, Notion, Docusaurus, VitePress, MkDocs, GitBook, Sphinx, Mintlify.
+- 🔌 **Plugins & apps** — all WordPress plugins visible on the page (with versions), page builders (Elementor, Divi, WPBakery, Bricks…), SEO plugins, and Shopify apps.
+- 💳 **Widgets & services** — payments, live chat, cookie consent, captcha, maps, video, monitoring, email marketing, A/B testing.
+- 🩺 **Site health** — noindex, robots.txt blocking, HTTPS/mixed content, title/description/H1, canonical, sitemap, end-of-life PHP.
 - 🧩 **Tech stack** — React, Preact, Vue, Angular, Svelte, Solid, Qwik, Ember, Next.js, Nuxt, Remix, Gatsby, Astro, Hugo, Jekyll, Eleventy, jQuery, Tailwind, Bootstrap, Three.js, GSAP, Stripe, and more.
 - 🎨 **Theme detection** — extracts the active theme/template where the platform exposes it.
 - 📈 **Marketing & analytics tags** — Google Analytics/GA4, GTM, Meta Pixel, Hotjar, Clarity, Segment, Mixpanel, HubSpot, TikTok, LinkedIn, Pinterest, Intercom, and more.
@@ -115,12 +115,15 @@ Detection is **triggered on demand** from the popup using `chrome.scripting`, so
 ```
 popup.html / popup.js     ← UI + triggers detection on click
   └─ chrome.scripting      ← injects detectors into the active tab (MAIN world)
-       ├─ frameworkDetector ← CMS / builder / e-commerce platform
-       ├─ techStackDetector ← frameworks & libraries (+ versions)
-       ├─ themeDetector      ← active theme/template
-       ├─ siteInfoDetector   ← analytics, pixels, sitemap
-       ├─ pageInfoDetector   ← page stats: words, images, links
-       └─ headerDetector     ← hosting/CDN, server, security headers (same-origin)
+       ├─ detectUtils       ← shared helpers (one temporary window.__wfd namespace)
+       ├─ headerDetector    ← hosting/CDN, server, security headers (same-origin)
+       ├─ frameworkDetector ← CMS / builder / e-commerce platform (signal table)
+       ├─ themeDetector     ← active theme/template
+       ├─ techStackDetector ← frameworks, libraries, plugins/apps, services
+       ├─ siteInfoDetector  ← analytics tags + IDs, robots.txt, sitemap
+       ├─ pageInfoDetector  ← SEO basics and page stats
+       └─ collect           ← runs everything, builds site-health checks
+  window.__wfd is deleted after the scan — nothing is left on the page.
 ```
 
 ---
@@ -147,12 +150,15 @@ cd site-platform-detector
 |---|---|
 | `manifest.json` | MV3 manifest (permissions, icons, popup) |
 | `popup.html` / `popup.js` | Extension UI and result rendering |
-| `frameworkDetector.js` | CMS / website-builder / e-commerce detection |
-| `techStackDetector.js` | Frameworks & libraries |
+| `detectUtils.js` | Shared helpers (asset snapshot, safe global lookup, soft fetch) |
+| `frameworkDetector.js` | CMS / website-builder / e-commerce platforms (signal table) |
+| `techStackDetector.js` | Frameworks, libraries, plugins & apps, widgets & services |
 | `themeDetector.js` | Active theme / template extraction |
-| `siteInfoDetector.js` | Analytics, pixels, sitemap |
-| `pageInfoDetector.js` | Page stats: words, images, links |
+| `siteInfoDetector.js` | Analytics tags + tracking IDs, robots.txt, sitemap |
+| `pageInfoDetector.js` | SEO basics and page stats |
 | `headerDetector.js` | Hosting/CDN, server, security headers (same-origin fetch) |
+| `collect.js` | Runs all detectors, builds site-health checks |
+| `tests/` | Fixture pages + test runners (not shipped in the store package) |
 | `background.js` | Service worker (lifecycle, install page) |
 | `icons/brands/` | Bundled brand logos (recolored Simple Icons, CC0) |
 
@@ -161,34 +167,26 @@ cd site-platform-detector
 - [Growth strategy (Chrome Web Store, Month 3+)](docs/growth-strategy.md)
 - [SEO & ASO playbook](marketing/seo.md)
 
-### Adding a new platform
-1. Add a detector function (DOM/meta/script signals + optional `MAIN`-world global check).
-2. Register it in the scoring pipeline with its signals.
-3. Add an icon mapping and a sample fixture under `tests/fixtures/`.
-4. Run the detection tests.
+### Running the tests
+
+```bash
+npm install          # installs Playwright (dev only)
+npx playwright install chromium
+npm test             # 33 fixture pages through the real detector files
+npm run test:e2e     # loads the extension and checks the popup end to end
+```
+
+### Adding a new platform or technology
+1. Platforms: add an entry to the `P` table in `frameworkDetector.js` — signals are `gen` (generator meta), `js` (runtime global), `dom` (selector), `asset` (script/link URL), `hdr` (response header), `cookie`, `host`.
+2. Technologies: add a rule to `techStackDetector.js` with a precise test (exact host/path or a runtime global — no loose substrings).
+3. Add a realistic fixture to `tests/fixtures.js` — including a "must not detect" case if the signal could collide with another platform.
+4. Run `npm test`.
 
 ---
 
 ## Roadmap
 
-### New detection categories (align engine with the product page)
-- [ ] **Hosting & CDN** — Cloudflare (full), Netlify, Vercel, AWS/CloudFront, Google Cloud, Fastly
-- [ ] **Server & backend** — Apache, Nginx, IIS; PHP, Node.js, ASP.NET (via response headers + asset hints)
-- [ ] **SEO & meta** — canonical tag, robots/meta-robots, structured data (JSON-LD), Open Graph / Twitter cards, hreflang
-- [x] **More platforms** — WooCommerce, Magento, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda
-- [x] **Page info panel** — word count, reading time, images/alt, mobile-friendly, HTTPS, canonical, social cards, structured data
-
-### Engine & UX
-- [x] Auto-detect on popup open
-- [x] Copy results / export as JSON
-- [x] Dark mode
-- [ ] Response-header signals (enables hosting/server detection)
-- [ ] Detection history (opt-in)
-- [ ] Firefox / Edge builds
-
-> Note: Hosting/CDN, server, and SEO/meta detection are advertised on the
-> [product page](https://anupammondal.in/chrome-extension/website-framework-detector)
-> and are tracked here to bring the shipped extension in line with that copy.
+See [ROADMAP.md](ROADMAP.md) for the plan from ~250 to 500+ users (v1.4 → v1.6).
 
 ---
 

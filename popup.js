@@ -16,9 +16,9 @@ const BRAND_SLUG = {
   'Blogger': 'blogger', 'HubSpot CMS': 'hubspot', 'Framer': 'framer', 'Craft CMS': 'craftcms',
   // Languages & frameworks
   'HTML': 'html5', 'CSS': 'css3', 'JavaScript': 'javascript',
-  'ReactJS': 'react', 'Preact': 'preact', 'VueJS': 'vuedotjs', 'Angular': 'angular',
-  'Svelte': 'svelte', 'SolidJS': 'solid', 'Qwik': 'qwik', 'Ember': 'emberdotjs',
-  'Alpine.js': 'alpinedotjs', 'NextJS': 'nextdotjs', 'NuxtJS': 'nuxtdotjs', 'Remix': 'remix',
+  'React': 'react', 'ReactJS': 'react', 'Preact': 'preact', 'Vue.js': 'vuedotjs', 'VueJS': 'vuedotjs', 'Angular': 'angular',
+  'AngularJS': 'angular', 'Svelte': 'svelte', 'SvelteKit': 'svelte', 'SolidJS': 'solid', 'Qwik': 'qwik', 'Ember.js': 'emberdotjs',
+  'Alpine.js': 'alpinedotjs', 'Next.js': 'nextdotjs', 'NextJS': 'nextdotjs', 'Nuxt': 'nuxtdotjs', 'NuxtJS': 'nuxtdotjs', 'Remix': 'remix',
   'Gatsby': 'gatsby', 'Astro': 'astro', 'Hugo': 'hugo', 'Jekyll': 'jekyll', 'Eleventy': 'eleventy',
   // CSS / libraries
   'Bootstrap': 'bootstrap', 'Tailwind CSS': 'tailwindcss', 'Font Awesome': 'fontawesome',
@@ -32,8 +32,9 @@ const BRAND_SLUG = {
   'PHP': 'php',
   // Analytics / tags
   'Google Tag Manager': 'googletagmanager', 'Meta Pixel': 'facebook', 'Hotjar': 'hotjar',
-  'HubSpot': 'hubspot', 'LinkedIn Insight': 'linkedin',
-  'Twitter Pixel': 'x', 'Pinterest Tag': 'pinterest', 'TikTok Pixel': 'tiktok',
+  'Google Analytics 4': 'googleanalytics', 'Universal Analytics': 'googleanalytics',
+  'HubSpot': 'hubspot', 'HubSpot Chat': 'hubspot', 'LinkedIn Insight': 'linkedin', 'Laravel': 'php',
+  'X (Twitter) Pixel': 'x', 'Twitter Pixel': 'x', 'Pinterest Tag': 'pinterest', 'TikTok Pixel': 'tiktok',
   'Intercom': 'intercom', 'Sitemap': 'sitemap'
 };
 function slugFor(name) {
@@ -70,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'whyToggle', 'whyChev', 'whyList', 'hostingRow', 'hostingChips', 'securityRow', 'securityChecks',
     'historyBtn', 'historyPanel', 'historyList', 'historyClear',
     'errorBox', 'errorMsg', 'retryBtn', 'rescanBtn', 'copyBtn',
-    'exportBtn', 'themeToggle', 'reviewPrompt', 'reviewYes', 'reviewLater', 'favicon', 'shareBtn'
+    'exportBtn', 'themeToggle', 'reviewPrompt', 'reviewYes', 'reviewLater', 'favicon', 'shareBtn',
+    'themeDetail', 'pluginsRow', 'pluginsChips', 'servicesRow', 'servicesChips',
+    'healthRow', 'healthList', 'healthScore', 'reportBtn'
   ].forEach(id => { els[id] = document.getElementById(id); });
 
   initTheme();
@@ -83,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.retryBtn.addEventListener('click', () => detect());
   els.copyBtn.addEventListener('click', copyResult);
   els.exportBtn.addEventListener('click', exportResult);
+  els.reportBtn.addEventListener('click', reportResult);
   els.reviewYes.addEventListener('click', onReviewYes);
   els.reviewLater.addEventListener('click', onReviewLater);
 
@@ -151,31 +155,18 @@ function isSupportedTabUrl(urlStr) {
   } catch (_) { return false; }
 }
 
-// Orchestrator executed in the page's MAIN world after detector files inject.
-async function collectInPage() {
-  const fw = (typeof window.detectFramework === 'function')
-    ? window.detectFramework()
-    : { framework: 'Custom/Unknown', colorClass: '', subtitle: 'Detector script did not load on this page', confidence: 0, details: [] };
-  const breakdown = {};
+// Detector files, injected in this order into the page's MAIN world on demand.
+// (tests/harness.js reads this list too.)
+const DETECTOR_FILES = ['detectUtils.js', 'headerDetector.js', 'frameworkDetector.js', 'themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'pageInfoDetector.js', 'collect.js'];
+
+// Runs in the page: collect the result, then remove our namespace so the page
+// is left exactly as it was.
+async function runInPage() {
   try {
-    const t = (typeof window.detectTheme === 'function') ? window.detectTheme(fw.framework) : { theme: null, source: null };
-    breakdown.theme = t.theme || null; breakdown.themeSource = t.source || null;
-  } catch (_) { breakdown.theme = null; }
-  try {
-    const ts = (typeof window.detectTechStack === 'function') ? window.detectTechStack() : { list: [], versions: {} };
-    breakdown.techStack = ts.list;
-    breakdown.techVersions = ts.versions || {};
-  } catch (_) { breakdown.techStack = ['HTML', 'CSS', 'JavaScript']; breakdown.techVersions = {}; }
-  try {
-    breakdown.siteInfo = (typeof window.detectSiteInfo === 'function') ? await window.detectSiteInfo() : null;
-  } catch (_) { breakdown.siteInfo = null; }
-  try {
-    breakdown.pageInfo = (typeof window.detectPageInfo === 'function') ? window.detectPageInfo() : null;
-  } catch (_) { breakdown.pageInfo = null; }
-  try {
-    breakdown.headers = (typeof window.detectHeaders === 'function') ? await window.detectHeaders() : null;
-  } catch (_) { breakdown.headers = null; }
-  return { ...fw, breakdown };
+    return await window.__wfd.collect();
+  } finally {
+    try { delete window.__wfd; } catch (_) { window.__wfd = undefined; }
+  }
 }
 
 async function detect() {
@@ -186,11 +177,8 @@ async function detect() {
   showLoading();
   try {
     const target = { tabId: currentTab.id };
-    await chrome.scripting.executeScript({
-      target, world: 'MAIN',
-      files: ['themeDetector.js', 'techStackDetector.js', 'siteInfoDetector.js', 'pageInfoDetector.js', 'headerDetector.js', 'frameworkDetector.js']
-    });
-    const results = await chrome.scripting.executeScript({ target, world: 'MAIN', func: collectInPage });
+    await chrome.scripting.executeScript({ target, world: 'MAIN', files: DETECTOR_FILES });
+    const results = await chrome.scripting.executeScript({ target, world: 'MAIN', func: runInPage });
     const data = results && results[0] && results[0].result;
     if (data && data.framework) {
       lastResult = data;
@@ -201,9 +189,17 @@ async function detect() {
     }
   } catch (err) {
     console.error('[Framework Detector]', err);
-    const msg = (err && err.message) ? err.message : String(err);
-    showError('Could not analyze this page: ' + msg);
+    showError(friendlyError((err && err.message) ? err.message : String(err)));
   }
+}
+
+// Turn Chrome's injection errors into something a person can act on.
+function friendlyError(msg) {
+  if (/gallery cannot be scripted|chromewebstore|webstore/i.test(msg)) return 'Chrome does not allow extensions to read Chrome Web Store pages. Try any other website.';
+  if (/file:\/\/|file url/i.test(msg)) return 'To scan local files, enable "Allow access to file URLs" for this extension in chrome://extensions.';
+  if (/cannot access|cannot be scripted|permission/i.test(msg)) return 'Chrome blocks extensions on this page (browser, PDF or policy-protected page). Try a normal website.';
+  if (/no tab|frame|was removed/i.test(msg)) return 'The page changed while scanning. Press Try again.';
+  return 'Could not analyze this page: ' + msg;
 }
 
 // ---------- Rendering ----------
@@ -220,12 +216,28 @@ function showError(msg) {
   els.errorBox.classList.remove('hidden');
 }
 
+// Which tech categories go in which popup section.
+const PLUGIN_CATS = ['Plugins & apps'];
+const SERVICE_CATS = ['Payments', 'Live chat & support', 'Cookie consent', 'Security', 'Search', 'Video & media', 'Maps', 'Monitoring', 'Email & marketing', 'A/B testing'];
+
+function techItems(b) {
+  const raw = (b && b.techStack) || [];
+  // Older history/exports used plain strings.
+  return raw.map(t => (typeof t === 'string' ? { name: t, cat: '', version: (b.techVersions || {})[t] || '' } : t));
+}
+
+function fillChips(container, row, items) {
+  container.innerHTML = '';
+  items.forEach(t => container.appendChild(buildChip(t.version ? `${t.name} ${t.version}` : t.name, t.name, t.cat)));
+  row.classList.toggle('hidden', items.length === 0);
+}
+
 function displayResults(data) {
+  const b = data.breakdown || {};
   // Hero
   els.resultIcon.replaceWith(buildHeroIcon(data.framework));
   els.resultIcon = document.getElementById('resultIcon');
   els.resultTitle.textContent = data.framework;
-  // Version pill next to the platform name
   const verEl = els.resultTitle.parentNode.querySelector('.ver-pill');
   if (verEl) verEl.remove();
   if (data.version) {
@@ -234,7 +246,9 @@ function displayResults(data) {
     pill.textContent = 'v' + data.version;
     els.resultTitle.insertAdjacentElement('afterend', pill);
   }
-  els.resultSubtitle.textContent = data.subtitle || '';
+  let subtitle = data.subtitle || '';
+  if (data.parentPlatform) subtitle += ` · on ${data.parentPlatform.name}${data.parentPlatform.version ? ' ' + data.parentPlatform.version : ''}`;
+  els.resultSubtitle.textContent = subtitle;
 
   // Confidence
   const pct = Math.max(0, Math.min(100, Number(data.confidence) || 0));
@@ -242,44 +256,46 @@ function displayResults(data) {
   els.confidenceLevel.style.width = '0%';
   requestAnimationFrame(() => { els.confidenceLevel.style.width = pct + '%'; });
 
-  // Why this result (matched signals)
+  // Why this result (matched evidence)
   els.whyList.innerHTML = '';
-  const why = (data.details || []).map(d => d.replace(/^Matched:\s*/, ''));
+  const why = (data.details || []).slice();
+  if (data.alsoDetected && data.alsoDetected.length) why.push('Also found signals of: ' + data.alsoDetected.join(', '));
   why.forEach(d => { const li = document.createElement('li'); li.textContent = d; els.whyList.appendChild(li); });
   els.whyToggle.style.display = why.length ? '' : 'none';
 
   // Theme
-  const theme = data.breakdown && data.breakdown.theme;
-  els.themeValue.textContent = theme || '';
-  els.themeRow.classList.toggle('hidden', !theme);
+  els.themeValue.textContent = b.theme || '';
+  els.themeDetail.textContent = b.themeDetail || '';
+  els.themeRow.classList.toggle('hidden', !b.theme && !b.themeDetail);
+  if (!b.theme && b.themeDetail) els.themeValue.textContent = 'Theme name not exposed';
 
-  // Tech stack (with versions where known)
-  els.techStackChips.innerHTML = '';
-  const tech = (data.breakdown && data.breakdown.techStack) || [];
-  const versions = (data.breakdown && data.breakdown.techVersions) || {};
-  tech.forEach(name => {
-    const label = versions[name] ? `${name} ${versions[name]}` : name;
-    els.techStackChips.appendChild(buildChip(label, name));
-  });
-  els.techStackRow.classList.toggle('hidden', tech.length === 0);
+  // Tech stack / plugins & apps / widgets & services
+  const items = techItems(b);
+  const plugins = items.filter(t => PLUGIN_CATS.includes(t.cat));
+  const services = items.filter(t => SERVICE_CATS.includes(t.cat));
+  const core = items.filter(t => !plugins.includes(t) && !services.includes(t));
+  fillChips(els.techStackChips, els.techStackRow, core);
+  fillChips(els.pluginsChips, els.pluginsRow, plugins);
+  fillChips(els.servicesChips, els.servicesRow, services);
 
   // Hosting & server
   els.hostingChips.innerHTML = '';
-  const host = hostingToList(data.breakdown && data.breakdown.headers);
+  const host = hostingToList(b.headers);
   host.forEach(name => els.hostingChips.appendChild(buildChip(name)));
   els.hostingRow.classList.toggle('hidden', host.length === 0);
 
   // Security headers
-  renderSecurity(data.breakdown && data.breakdown.headers);
+  renderSecurity(b.headers);
 
-  // Analytics & tags
+  // Analytics & tags (with tracking IDs)
   els.siteInfoBadges.innerHTML = '';
-  const tags = siteInfoToList(data.breakdown && data.breakdown.siteInfo);
-  tags.forEach(name => els.siteInfoBadges.appendChild(buildChip(name)));
+  const tags = tagsToList(b);
+  tags.forEach(t => els.siteInfoBadges.appendChild(buildChip(t.name, t.name, '', t.ids)));
   els.siteInfoRow.classList.toggle('hidden', tags.length === 0);
 
-  // Page info
-  renderPageInfo(data.breakdown && data.breakdown.pageInfo);
+  // Site health + page info
+  renderHealth(b.health, b.siteInfo);
+  renderPageInfo(b.pageInfo);
 
   els.loading.classList.add('hidden');
   els.errorBox.classList.add('hidden');
@@ -289,20 +305,40 @@ function displayResults(data) {
   saveHistory(data);
 }
 
+function renderHealth(health, siteInfo) {
+  els.healthList.innerHTML = '';
+  if (!Array.isArray(health)) { els.healthRow.classList.add('hidden'); return; }
+  const errors = health.filter(h => h.level === 'error').length;
+  const warns = health.length - errors;
+  els.healthScore.textContent = errors ? `${errors} critical` : (warns ? `${warns} to improve` : 'All good');
+  const rows = health.slice().sort((a, b) => (a.level === 'error' ? 0 : 1) - (b.level === 'error' ? 0 : 1));
+  if (siteInfo && siteInfo.sitemap) rows.push({ level: 'ok', text: 'XML sitemap found' + (siteInfo.sitemapUrl ? ` (${siteInfo.sitemapUrl.replace(/^https?:\/\/[^/]+/, '')})` : '') });
+  if (siteInfo && siteInfo.robots && siteInfo.robots.found && !siteInfo.robots.blocksAll) rows.push({ level: 'ok', text: 'robots.txt allows crawling' });
+  rows.forEach(h => {
+    const li = document.createElement('li');
+    li.className = h.level;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'icon');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', h.level === 'ok' ? '#i-check' : (h.level === 'error' ? '#i-x' : '#i-alert'));
+    svg.appendChild(use);
+    const span = document.createElement('span');
+    span.textContent = h.text;
+    li.appendChild(svg); li.appendChild(span);
+    els.healthList.appendChild(li);
+  });
+  els.healthRow.classList.toggle('hidden', rows.length === 0);
+}
+
 function hostingToList(h) {
   if (!h || !h.available) return [];
   const out = [...(h.hosting || [])];
-  if (h.server) {
-    if (/nginx/i.test(h.server)) out.push('Nginx');
-    else if (/apache/i.test(h.server)) out.push('Apache');
-    else if (/iis|microsoft/i.test(h.server)) out.push('IIS');
-    else if (/litespeed/i.test(h.server)) out.push('LiteSpeed');
-  }
-  if (h.backend) {
-    if (/php/i.test(h.backend)) out.push('PHP');
-    else if (/asp\.net|aspnet/i.test(h.backend)) out.push('ASP.NET');
-    else if (/express/i.test(h.backend)) out.push('Express');
-  }
+  if (h.serverInfo) out.push(h.serverInfo.name + (h.serverInfo.version ? ' ' + h.serverInfo.version : ''));
+  (h.backend || []).forEach(b => {
+    if (typeof b === 'string') return;
+    if (b.name === 'Next.js' || b.name === 'Nuxt') return; // shown in the tech stack
+    out.push(b.name + (b.version ? ' ' + b.version : ''));
+  });
   return [...new Set(out)];
 }
 
@@ -342,13 +378,23 @@ function buildHeroIcon(name) {
   tile.id = 'resultIcon';
   return tile;
 }
-function buildChip(label, logoName) {
+function buildChip(label, logoName, category, ids) {
   const chip = document.createElement('span');
   chip.className = 'chip';
+  if (category) chip.title = category;
   chip.appendChild(buildIcon(logoName || label, 'chip'));
   const span = document.createElement('span');
   span.textContent = label;
   chip.appendChild(span);
+  if (ids && ids.length) {
+    const id = document.createElement('span');
+    id.className = 'chip-id';
+    id.textContent = ids.join(', ');
+    chip.appendChild(id);
+    chip.title = 'Tracking ID — click to copy';
+    chip.style.cursor = 'copy';
+    chip.addEventListener('click', () => { navigator.clipboard.writeText(ids.join(', ')).then(() => { id.textContent = 'copied'; setTimeout(() => { id.textContent = ids.join(', '); }, 1200); }).catch(() => {}); });
+  }
   return chip;
 }
 
@@ -376,60 +422,66 @@ function renderPageInfo(info) {
   els.pageInfoRow.classList.remove('hidden');
 }
 
-function siteInfoToList(info) {
-  if (!info) return [];
-  const out = [];
-  if (info.sitemap) out.push('Sitemap');
-  if (info.ga) out.push('Google Analytics' + (info.gaType ? ' (' + info.gaType + ')' : ''));
-  if (info.gtm) out.push('Google Tag Manager');
-  if (info.fbPixel) out.push('Meta Pixel');
-  if (info.hotjar) out.push('Hotjar');
-  if (info.cloudflare) out.push('Cloudflare');
-  if (info.segment) out.push('Segment');
-  if (info.mixpanel) out.push('Mixpanel');
-  if (info.hubspot) out.push('HubSpot');
-  if (info.linkedin) out.push('LinkedIn Insight');
-  if (info.twitter) out.push('Twitter Pixel');
-  if (info.clarity) out.push('Microsoft Clarity');
-  if (info.pinterest) out.push('Pinterest Tag');
-  if (info.tiktok) out.push('TikTok Pixel');
-  if (info.bingUET) out.push('Bing UET');
-  if (info.intercom) out.push('Intercom');
-  return out;
+function tagsToList(b) {
+  if (Array.isArray(b.tags)) return b.tags;
+  return [];
 }
 
-// ---------- Copy / Export ----------
+// ---------- Copy / Export / Report ----------
 function buildExport() {
   if (!lastResult) return null;
   const b = lastResult.breakdown || {};
+  const items = techItems(b);
   return {
-    url: currentHost,
+    url: currentTab ? currentTab.url : currentHost,
+    host: currentHost,
     detectedAt: new Date().toISOString(),
-    framework: lastResult.framework,
+    extensionVersion: chrome.runtime.getManifest().version,
+    platform: lastResult.framework,
     version: lastResult.version || null,
+    runsOn: lastResult.parentPlatform || null,
     confidence: lastResult.confidence,
+    evidence: lastResult.details || [],
     theme: b.theme || null,
-    techStack: b.techStack || [],
-    techVersions: b.techVersions || {},
+    themeDetail: b.themeDetail || null,
+    techStack: items,
     hosting: hostingToList(b.headers),
     securityHeaders: (b.headers && b.headers.available) ? b.headers.security : null,
-    analyticsAndTags: siteInfoToList(b.siteInfo),
-    pageInfo: b.pageInfo || null,
-    stats: { scripts: lastResult.scriptsFound, metaTags: lastResult.metaTags, links: lastResult.linksFound }
+    analyticsAndTags: tagsToList(b),
+    trackingIds: b.trackingIds || [],
+    sitemap: b.siteInfo ? { found: b.siteInfo.sitemap, url: b.siteInfo.sitemapUrl || null } : null,
+    robotsTxt: b.siteInfo ? b.siteInfo.robots : null,
+    health: b.health || [],
+    pageInfo: b.pageInfo || null
   };
 }
+
+// A Markdown report — pastes cleanly into Slack, Notion, GitHub, Jira or an email.
+function buildMarkdown(d) {
+  const L = [];
+  const list = (title, arr) => { if (arr.length) L.push(`**${title}:** ${arr.join(', ')}`); };
+  L.push(`### ${d.host} — tech report`);
+  L.push(`**Platform:** ${d.platform}${d.version ? ' ' + d.version : ''}${d.runsOn ? ` (on ${d.runsOn.name}${d.runsOn.version ? ' ' + d.runsOn.version : ''})` : ''} — ${d.confidence}% confidence`);
+  if (d.theme) L.push(`**Theme:** ${d.theme}${d.themeDetail ? ` (${d.themeDetail})` : ''}`);
+  const fmt = (t) => t.version ? `${t.name} ${t.version}` : t.name;
+  list('Tech stack', d.techStack.filter(t => !PLUGIN_CATS.includes(t.cat) && !SERVICE_CATS.includes(t.cat)).map(fmt));
+  list('Plugins & apps', d.techStack.filter(t => PLUGIN_CATS.includes(t.cat)).map(fmt));
+  list('Widgets & services', d.techStack.filter(t => SERVICE_CATS.includes(t.cat)).map(fmt));
+  list('Hosting & server', d.hosting);
+  list('Analytics & tags', d.analyticsAndTags.map(t => t.ids && t.ids.length ? `${t.name} (${t.ids.join(', ')})` : t.name));
+  if (d.health.length) {
+    L.push('**Site health:**');
+    d.health.forEach(h => L.push(`- ${h.level === 'error' ? '❌' : '⚠️'} ${h.text}`));
+  }
+  L.push('', `_Scanned ${d.detectedAt.slice(0, 10)} with Website Framework Detector — ${STORE_URL}_`);
+  return L.join('\n');
+}
+
 async function copyResult() {
   const data = buildExport();
   if (!data) return;
-  const text =
-    `Website Framework Detector\n` +
-    `URL: ${data.url}\n` +
-    `Platform: ${data.framework} (${data.confidence}% confidence)\n` +
-    (data.theme ? `Theme: ${data.theme}\n` : '') +
-    (data.techStack.length ? `Tech stack: ${data.techStack.join(', ')}\n` : '') +
-    (data.analyticsAndTags.length ? `Analytics & tags: ${data.analyticsAndTags.join(', ')}\n` : '');
   try {
-    await navigator.clipboard.writeText(text.trim());
+    await navigator.clipboard.writeText(buildMarkdown(data));
     flash(els.copyBtn, 'Copied!');
   } catch (_) { flash(els.copyBtn, 'Copy failed'); }
 }
@@ -446,6 +498,25 @@ function exportResult() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   flash(els.exportBtn, 'Saved!');
+}
+
+// Opens a pre-filled GitHub issue. Nothing is sent unless the user submits it.
+function reportResult() {
+  const d = buildExport();
+  const title = `[Bug]: ${currentHost || 'site'} detected as "${d ? d.platform : 'error'}"`;
+  const what = d
+    ? `Detected **${d.platform}** (${d.confidence}% confidence).` + (d.evidence.length ? `\n\nEvidence:\n- ${d.evidence.join('\n- ')}` : '')
+    : 'Detection failed on this page.';
+  // Field ids match .github/ISSUE_TEMPLATE/bug_report.yml (issue forms accept them as URL params).
+  const params = new URLSearchParams({
+    template: 'bug_report.yml', title,
+    url: d ? d.url : currentHost,
+    'what-happened': what,
+    expected: 'The site is actually built with: ',
+    'extension-version': chrome.runtime.getManifest().version
+  });
+  const url = 'https://github.com/anupammo/site-platform-detector/issues/new?' + params.toString();
+  chrome.tabs.create({ url });
 }
 function flash(btn, msg) {
   const label = btn.childNodes[btn.childNodes.length - 1];
@@ -470,7 +541,8 @@ function setBadge(framework) {
       'WordPress': 'WP', 'WooCommerce': 'Woo', 'Shopify': 'Shop', 'Wix': 'Wix', 'Webflow': 'WF',
       'Squarespace': 'Sqs', 'Joomla': 'Joo', 'Drupal': 'Dru', 'Magento': 'Mag', 'PrestaShop': 'PS',
       'BigCommerce': 'BC', 'Ghost': 'Gh', 'Blogger': 'Bl', 'HubSpot CMS': 'HS', 'Framer': 'Fr',
-      'Craft CMS': 'Cft', 'Duda': 'Dud', 'Custom/Unknown': '?'
+      'Craft CMS': 'Cft', 'Duda': 'Dud', 'OpenCart': 'OC', 'Shopware': 'SW', 'TYPO3': 'T3',
+      'Next.js': 'Nxt', 'Nuxt': 'Nux', 'React': 'Rct', 'Vue.js': 'Vue', 'Angular': 'Ng', 'Custom/Unknown': '?'
     };
     const text = map[framework] || framework.slice(0, 3);
     const tabId = currentTab && currentTab.id;

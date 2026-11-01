@@ -1,0 +1,15 @@
+{
+  "name": "website-framework-detector",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Chrome extension that detects the CMS, builder and tech stack behind any website — 100% local.",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "test": "node tests/run.js",
+    "test:e2e": "node tests/e2e.js",
+    "package": "node -e \"const v=require('./manifest.json').version;require('fs').mkdirSync('dist',{recursive:true});require('child_process').execSync('zip -r -X dist/website-framework-detector-'+v+'.zip manifest.json *.js popup.html icons -x \\\"*.DS_Store\\\"',{stdio:'inherit'})\""
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

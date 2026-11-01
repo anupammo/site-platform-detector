@@ -16,7 +16,7 @@
          "description": "Open Website Framework Detector"
       }
    },
-   "description": "Detect the CMS, builder & tech stack behind any site (WordPress, Shopify, Wix, Webflow…) — 100% local, no tracking.",
+   "description": "See what any site is built with: CMS, theme, plugins, tech stack, GA4/GTM IDs & SEO health. 100% local, no tracking.",
    "icons": {
       "128": "icons/icon128.png",
       "16": "icons/icon16.png",
@@ -26,5 +26,5 @@
    "manifest_version": 3,
    "name": "Website Framework Detector",
    "permissions": [ "activeTab", "scripting", "storage" ],
-   "version": "1.3.0"
+   "version": "1.4.0"
 }

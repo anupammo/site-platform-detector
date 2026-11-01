@@ -179,6 +179,20 @@
     .check { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border); }
     .check .icon { width: 13px; height: 13px; }
     .check.ok { color: var(--success); }
+    .theme-detail { font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; }
+    .theme-detail:empty { display: none; }
+    .chip .chip-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem; color: var(--text-dim); margin-left: 2px; }
+    .health-score { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--text); }
+    .health-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .health-list li { display: flex; align-items: flex-start; gap: 7px; font-size: 0.78rem; color: var(--text); line-height: 1.35; }
+    .health-list li .icon { width: 14px; height: 14px; flex: none; margin-top: 1px; }
+    .health-list li.error .icon { color: var(--danger); }
+    .health-list li.warn .icon { color: var(--warning); }
+    .health-list li.ok .icon { color: var(--success); }
+    .health-more { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; font-size: 0.76rem; font-weight: 600; color: var(--text-dim); text-decoration: none; }
+    .health-more:hover { color: var(--text); }
+    .health-more .icon { width: 12px; height: 12px; }
+    .report-link { display: block; margin: 10px auto 0; font-size: 0.74rem; color: var(--text-dim); }
     .check.no { color: var(--text-dim); }
 
     .chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -290,11 +304,22 @@
     <section class="section hidden" id="themeRow">
       <h3><svg class="icon"><use href="#i-palette"></use></svg> Theme</h3>
       <div class="theme-value" id="themeValue"></div>
+      <div class="theme-detail" id="themeDetail"></div>
     </section>
 
     <section class="section hidden" id="techStackRow">
       <h3><svg class="icon"><use href="#i-layers"></use></svg> Tech stack</h3>
       <div class="chips" id="techStackChips"></div>
+    </section>
+
+    <section class="section hidden" id="pluginsRow">
+      <h3><svg class="icon"><use href="#i-puzzle"></use></svg> Plugins &amp; apps</h3>
+      <div class="chips" id="pluginsChips"></div>
+    </section>
+
+    <section class="section hidden" id="servicesRow">
+      <h3><svg class="icon"><use href="#i-grid"></use></svg> Widgets &amp; services</h3>
+      <div class="chips" id="servicesChips"></div>
     </section>
 
     <section class="section hidden" id="hostingRow">
@@ -312,6 +337,12 @@
       <div class="chips" id="siteInfoBadges"></div>
     </section>
 
+    <section class="section hidden" id="healthRow">
+      <h3><svg class="icon"><use href="#i-heart"></use></svg> Site health <span class="health-score" id="healthScore"></span></h3>
+      <ul class="health-list" id="healthList"></ul>
+      <a class="health-more" href="https://chromewebstore.google.com/detail/jgigdhidhmgikfnccdnehcpgoggmagfh?utm_source=wfd-health" target="_blank" rel="noopener">Full SEO audit with SEO Checklist <svg class="icon ext"><use href="#i-external"></use></svg></a>
+    </section>
+
     <section class="section hidden" id="pageInfoRow">
       <h3><svg class="icon"><use href="#i-file"></use></svg> Page info</h3>
       <div class="stat-grid" id="pageInfoStats"></div>
@@ -321,6 +352,7 @@
       <button class="btn" id="copyBtn"><svg class="icon"><use href="#i-copy"></use></svg> Copy</button>
       <button class="btn" id="exportBtn"><svg class="icon"><use href="#i-download"></use></svg> Export JSON</button>
     </div>
+    <button class="link-btn report-link" id="reportBtn" title="Open a pre-filled GitHub issue for this site">Wrong or missing result? Report it</button>
   </main>
 
   <div class="card error hidden" id="errorBox">
@@ -368,6 +400,9 @@
     <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M19.4 13.5a2.5 2.5 0 1 0 0-3H18V6a2 2 0 0 0-2-2h-4.5v1.4a2.5 2.5 0 1 1-3 0V4H4a2 2 0 0 0-2 2v4.5h1.4a2.5 2.5 0 1 1 0 3H2V18a2 2 0 0 0 2 2h4.5v-1.4a2.5 2.5 0 1 1 3 0V20H16a2 2 0 0 0 2-2v-4.5z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
   </svg>
 

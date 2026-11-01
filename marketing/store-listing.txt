@@ -3,18 +3,24 @@ CHROME WEB STORE LISTING (ASO-optimized)
 ==================================================
 
 Name (max 75 chars):
-Website Framework Detector – CMS & Tech Stack Checker
+Website Framework Detector – CMS, Theme, Plugins & Tech Stack Checker
 
 --------------------------------------------------
 Short description (max 132 chars — most important for ranking):
-Find out what any website is built with — WordPress, Shopify, Wix, Webflow & its tech stack. 100% local, no tracking.
+See what any site is built with: CMS, theme, plugins, tech stack, GA4/GTM IDs & SEO health. 100% local, no tracking.
 
 --------------------------------------------------
 Detailed description:
 Ever wondered "what is this website built with?" Website Framework Detector tells you in one click — the CMS or website builder, the theme, the full front-end tech stack, and the marketing/analytics tools a site loads. A fast, private, free alternative to heavyweight tools — with no account and no data collection.
 
-✅ DETECTS 17 CMS, BUILDERS & E-COMMERCE PLATFORMS
-WordPress, WooCommerce, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, Magento/Adobe Commerce, PrestaShop, BigCommerce, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda — with a real confidence score based on the actual signals found (never a random guess).
+✅ DETECTS 44 CMS, BUILDERS & E-COMMERCE PLATFORMS
+WordPress, WooCommerce, Shopify, Wix, Webflow, Squarespace, Joomla, Drupal, Magento/Adobe Commerce, PrestaShop, BigCommerce, OpenCart, Shopware, Salesforce Commerce Cloud, Ghost, Blogger, HubSpot CMS, Framer, Craft CMS, Duda, TYPO3, Sitecore, Adobe Experience Manager, Odoo, Weebly, GoDaddy, Tilda, Jimdo, Kajabi, Teachable, Substack, Notion, Docusaurus, GitBook and more — with a real confidence score and the evidence behind it.
+
+✅ WORDPRESS THEME & PLUGIN DETECTOR
+Shows the active theme (and parent theme) plus every plugin the page loads, with versions — Elementor, Divi, Yoast SEO, Rank Math, WP Rocket, Contact Form 7, WPML and hundreds more.
+
+✅ SHOPIFY THEME & APP DETECTOR
+Theme name, Theme Store ID and store domain, plus apps like Klaviyo, Judge.me, Yotpo, Loox, ReCharge, PageFly and GemPages.
 
 ✅ TECH STACK CHECKER
 React, Preact, Vue, Angular, Svelte, Solid, Qwik, Next.js, Nuxt, Remix, Gatsby, Astro, Hugo, Jekyll, jQuery, Tailwind CSS, Bootstrap, Three.js, GSAP, Stripe, and more.
@@ -22,15 +28,23 @@ React, Preact, Vue, Angular, Svelte, Solid, Qwik, Next.js, Nuxt, Remix, Gatsby, 
 ✅ THEME DETECTION
 Reveals the active theme/template where the platform exposes it.
 
-✅ MARKETING & ANALYTICS TAGS
-Google Analytics (GA4), Google Tag Manager, Meta Pixel, Hotjar, Microsoft Clarity, HubSpot, LinkedIn, TikTok, Pinterest, Intercom, and more.
+✅ GA4, GTM & PIXEL CHECKER — WITH IDs
+See which tags are installed and copy their IDs: GA4 (G-…), Google Tag Manager (GTM-…), Google Ads (AW-…), Meta Pixel, plus Hotjar, Clarity, HubSpot, TikTok, LinkedIn, Pinterest, Matomo, Plausible, PostHog and more.
 
-✅ PAGE INFO & HEALTH CHECKS
-Word count, reading time, image alt-text audit, and at-a-glance checks for HTTPS, mobile-friendliness, meta description, canonical tag, social cards, and structured data.
+✅ WIDGETS & SERVICES
+Payments (Stripe, PayPal, Razorpay, Cashfree, PhonePe, Klarna), live chat (Intercom, Tawk.to, Crisp, Zendesk, WhatsApp), cookie consent, reCAPTCHA, maps, video and monitoring tools.
+
+✅ HOSTING, SERVER & SECURITY
+Cloudflare, Vercel, Netlify, AWS, WP Engine, Kinsta, Hostinger and 20 more, the web server and PHP version, and six key security headers.
+
+✅ SITE HEALTH IN ONE GLANCE
+Catches costly mistakes: a page set to noindex, robots.txt blocking Google, missing HTTPS or mixed content, missing title/description/H1, canonical pointing elsewhere, no sitemap, end-of-life PHP.
 
 ✅ BUILT FOR REAL WORK
 • Auto-detects the moment you open it — one click to re-scan
-• Copy a summary or export the full result as JSON
+• Copy a ready-to-paste Markdown report (Slack, Notion, Jira, email) or export JSON
+• Recent scans history, toolbar badge and Alt+Shift+D shortcut
+• Wrong result? Report it in one click so it gets fixed
 • Light & dark mode
 • Real brand logos for instant recognition
 
@@ -48,9 +62,10 @@ Open source (GPLv3). Made by Anupam Mondal.
 --------------------------------------------------
 Primary keywords (use across title, short + detailed description, naturally):
 what is this website built with, website technology checker, CMS detector,
-tech stack detector, website framework detector, WordPress detector,
-Shopify detector, Wix detector, Webflow detector, built with, what runs,
-website builder checker, theme detector, framework finder
+tech stack detector, website framework detector, WordPress theme detector,
+WordPress plugin checker, Shopify theme detector, Shopify app detector,
+Wix detector, Webflow detector, GA4 checker, GTM checker, Wappalyzer alternative,
+built with, what runs, website builder checker, theme detector, framework finder
 
 --------------------------------------------------
 Category: Developer Tools
@@ -66,8 +81,8 @@ Support: support@credifyfast.com
 
 --------------------------------------------------
 Screenshot captions (1280x800, add text overlays for keyword + clarity):
-1. "Detect the CMS & builder of any website in one click"
-2. "See the full tech stack — React, Vue, Tailwind & more"
-3. "Theme + marketing tags (GA4, Meta Pixel, Hotjar)"
-4. "Copy or export results as JSON — 100% local & private"
-5. "Light & dark mode, real brand logos"
+1. "WordPress theme + every plugin, in one click"
+2. "Shopify theme, Theme Store ID & installed apps"
+3. "GA4 / GTM / Pixel IDs + site health warnings"
+4. "Hosting, server & security headers"
+5. "100% local & private — light & dark mode"

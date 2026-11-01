@@ -1,261 +1,218 @@
-// Framework / CMS detector — runs in the page's MAIN world (injected on demand),
-// so page-runtime globals (window.Shopify, window.wp, window.Webflow, …) are
-// accessible alongside the DOM. Confidence is computed from the weighted sum of
-// matched signals — never a random number.
+// Platform detector — identifies the CMS / site builder / e-commerce platform.
 //
-// Signal weights (additive, capped at 98):
-//   70 = definitive  (generator meta tag, unique runtime global)
-//   40 = strong+     (unique platform asset / init script)
-//   30 = strong      (vendor CDN host / asset path)
-//   12 = weak        (class-name / markup hints)
-function detectFramework() {
-  const q = (sel) => { try { return !!document.querySelector(sel); } catch (_) { return false; } };
-  const hasGlobal = (name) => { try { return typeof window[name] !== 'undefined' && window[name] !== null; } catch (_) { return false; } };
-  const scriptSrcMatch = (re) => { try { return [...document.scripts].some(s => s.src && re.test(s.src)); } catch (_) { return false; } };
-  const linkHrefMatch = (re) => { try { return [...document.querySelectorAll('link[href]')].some(l => re.test(l.href)); } catch (_) { return false; } };
-  const bodyClass = (c) => { try { return !!(document.body && document.body.classList.contains(c)); } catch (_) { return false; } };
+// Each platform has a list of signals. A signal is [type, pattern, weight?]:
+//   gen    — <meta name="generator"> regex (group 1 = version)      default 70
+//   js     — page runtime global, dotted path ("Shopify.shop")      default 70
+//   dom    — CSS selector present in the page                        default 40
+//   asset  — regex on <script src> / <link href> URLs                default 40
+//   hdr    — [headerName, regex] on the page's response headers      default 60
+//   cookie — regex on document.cookie                                default 40
+//   head   — regex on <head> HTML (comments, inline markup)          default 40
+//   host   — regex on location.hostname                              default 70
+// Confidence = sum of matched weights, capped at 98. A platform needs >= 40 to
+// count, so one weak hint is never enough on its own.
+(function () {
+  const W = window.__wfd = window.__wfd || {};
 
-  const detectors = [
-    {
-      framework: 'WooCommerce', specific: true,
-      iconClass: 'woocommerce', subtitle: 'WordPress-powered e-commerce store',
-      colorClass: 'woocommerce',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="WooCommerce"]') },
-        { w: 40, label: 'WooCommerce plugin assets', test: () => q('link[href*="/plugins/woocommerce/"], script[src*="/plugins/woocommerce/"]') },
-        { w: 40, label: 'woocommerce body class', test: () => bodyClass('woocommerce') || bodyClass('woocommerce-page') || q('.woocommerce') },
-        { w: 40, label: 'wc runtime params', test: () => hasGlobal('woocommerce_params') || hasGlobal('wc_add_to_cart_params') || hasGlobal('wc') }
-      ]
-    },
-    {
-      framework: 'WordPress',
-      iconClass: 'wordpress', subtitle: "The world's most popular content management system",
-      colorClass: 'wordpress',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="WordPress"]') },
-        { w: 40, label: 'WP REST API link', test: () => q('link[rel="https://api.w.org/"]') },
-        { w: 30, label: 'wp-content / wp-includes assets', test: () => q('link[href*="/wp-content/"], link[href*="/wp-includes/"], script[src*="/wp-content/"], script[src*="/wp-includes/"]') },
-        { w: 70, label: 'window.wp runtime', test: () => hasGlobal('wp') },
-        { w: 12, label: 'wp- body class', test: () => !!(document.body && [...document.body.classList].some(c => c.startsWith('wp-'))) }
-      ]
-    },
-    {
-      framework: 'Shopify',
-      iconClass: 'shopify', subtitle: 'Leading e-commerce platform for online stores',
-      colorClass: 'shopify',
-      signals: [
-        { w: 70, label: 'window.Shopify runtime', test: () => hasGlobal('Shopify') },
-        { w: 40, label: 'Shopify CDN assets', test: () => scriptSrcMatch(/cdn\.shopify\.com|\/cdn\/shop\//i) || linkHrefMatch(/cdn\.shopify\.com|\/cdn\/shop\//i) },
-        { w: 30, label: 'shopify meta / monorail', test: () => q('meta[name="shopify-digital-wallet"], meta[name="shopify-checkout-api-token"]') || scriptSrcMatch(/monorail-edge\.shopifysvc\.com/i) }
-      ]
-    },
-    {
-      framework: 'Wix',
-      iconClass: 'wix', subtitle: 'Popular drag-and-drop website builder',
-      colorClass: 'wix',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Wix"]') },
-        { w: 40, label: 'wixstatic / parastorage assets', test: () => scriptSrcMatch(/(wixstatic\.com|parastorage\.com)/i) || linkHrefMatch(/(wixstatic\.com|parastorage\.com)/i) },
-        { w: 70, label: 'Wix runtime globals', test: () => hasGlobal('wixBiSession') || hasGlobal('wixPerformanceMeasurements') || hasGlobal('wixEmbedsAPI') }
-      ]
-    },
-    {
-      framework: 'Webflow',
-      iconClass: 'webflow', subtitle: 'Design-focused website builder with CMS capabilities',
-      colorClass: 'webflow',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Webflow"]') },
-        { w: 70, label: 'window.Webflow runtime', test: () => hasGlobal('Webflow') },
-        { w: 40, label: 'data-wf-* attributes', test: () => q('[data-wf-page], [data-wf-site], [data-wf-status]') },
-        { w: 30, label: 'webflow assets', test: () => scriptSrcMatch(/webflow(\.min)?\.js|(assets|assets-global)\.website-files\.com/i) }
-      ]
-    },
-    {
-      framework: 'Squarespace',
-      iconClass: 'squarespace', subtitle: 'All-in-one website builder and hosting platform',
-      colorClass: 'squarespace',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Squarespace"]') },
-        { w: 40, label: 'squarespace CDN assets', test: () => scriptSrcMatch(/static\.squarespace\.com|squarespace-cdn\.com/i) || linkHrefMatch(/static\.squarespace\.com|squarespace-cdn\.com/i) },
-        { w: 70, label: 'Squarespace runtime context', test: () => { try { return !!(window.Static && window.Static.SQUARESPACE_CONTEXT); } catch (_) { return false; } } }
-      ]
-    },
-    {
-      framework: 'Joomla',
-      iconClass: 'joomla', subtitle: 'Powerful open-source content management system',
-      colorClass: 'joomla',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Joomla"]') },
-        { w: 40, label: '/media/system or /media/jui assets', test: () => q('script[src*="/media/system/"], link[href*="/media/system/"], script[src*="/media/jui/"], link[href*="/media/jui/"]') },
-        { w: 70, label: 'window.Joomla runtime', test: () => hasGlobal('Joomla') }
-      ]
-    },
-    {
-      framework: 'Drupal',
-      iconClass: 'drupal', subtitle: 'Enterprise-level open-source CMS',
-      colorClass: 'drupal',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Drupal"], meta[name="Generator"][content*="Drupal"]') },
-        { w: 70, label: 'window.Drupal runtime', test: () => hasGlobal('Drupal') },
-        { w: 40, label: 'drupal-settings-json', test: () => q('script[data-drupal-selector="drupal-settings-json"], #drupal-settings-json') },
-        { w: 30, label: '/sites/default assets', test: () => q('script[src*="/sites/default/files/"], link[href*="/sites/default/files/"]') }
-      ]
-    },
-    {
-      framework: 'Magento', specific: true,
-      iconClass: 'magento', subtitle: 'Adobe Commerce — enterprise e-commerce platform',
-      colorClass: 'magento',
-      signals: [
-        { w: 70, label: 'x-magento-init script', test: () => q('script[type="text/x-magento-init"]') },
-        { w: 40, label: 'Magento static assets', test: () => scriptSrcMatch(/\/static\/(frontend|version)\/|\/pub\/static\//i) || linkHrefMatch(/\/static\/(frontend|version)\//i) },
-        { w: 30, label: 'mage/ requirejs', test: () => scriptSrcMatch(/\/mage\/|requirejs\/require\.js/i) }
-      ]
-    },
-    {
-      framework: 'PrestaShop', specific: true,
-      iconClass: 'prestashop', subtitle: 'Open-source e-commerce platform',
-      colorClass: 'prestashop',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="PrestaShop"]') },
-        { w: 70, label: 'window.prestashop runtime', test: () => hasGlobal('prestashop') },
-        { w: 30, label: 'prestashop assets', test: () => scriptSrcMatch(/\/themes\/.+\/assets\/|prestashop/i) }
-      ]
-    },
-    {
-      framework: 'BigCommerce', specific: true,
-      iconClass: 'bigcommerce', subtitle: 'SaaS e-commerce platform (Stencil)',
-      colorClass: 'bigcommerce',
-      signals: [
-        { w: 70, label: 'window.BCData runtime', test: () => hasGlobal('BCData') },
-        { w: 40, label: 'bigcommerce CDN', test: () => scriptSrcMatch(/cdn\d*\.bigcommerce\.com/i) || linkHrefMatch(/cdn\d*\.bigcommerce\.com/i) },
-        { w: 30, label: 'stencil-utils', test: () => scriptSrcMatch(/stencil-utils/i) }
-      ]
-    },
-    {
-      framework: 'Ghost',
-      iconClass: 'ghost', subtitle: 'Modern publishing platform for blogs & newsletters',
-      colorClass: 'ghost',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Ghost"]') },
-        { w: 40, label: 'ghost assets / sodo-search', test: () => scriptSrcMatch(/\/ghost\/|sodo-search|ghost\.io/i) || linkHrefMatch(/\/ghost\//i) }
-      ]
-    },
-    {
-      framework: 'Blogger',
-      iconClass: 'blogger', subtitle: "Google's free blog publishing service",
-      colorClass: 'blogger',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Blogger"]') },
-        { w: 70, label: 'window._WidgetManager runtime', test: () => hasGlobal('_WidgetManager') },
-        { w: 30, label: 'blogger / blogspot assets', test: () => scriptSrcMatch(/(www\.blogger\.com|blogblog\.com|blogspot\.com)/i) }
-      ]
-    },
-    {
-      framework: 'HubSpot CMS', specific: true,
-      iconClass: 'hubspot', subtitle: 'Marketing-focused CMS by HubSpot',
-      colorClass: 'hubspot',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="HubSpot"]') },
-        { w: 70, label: 'window.hbspt runtime', test: () => hasGlobal('hbspt') },
-        { w: 40, label: 'hubspot CMS assets', test: () => scriptSrcMatch(/hs-sites\.com|hubspotusercontent|hscollectedforms/i) }
-      ]
-    },
-    {
-      framework: 'Framer',
-      iconClass: 'framer', subtitle: 'Design-first website builder',
-      colorClass: 'framer',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Framer"]') },
-        { w: 70, label: 'Framer runtime / attributes', test: () => hasGlobal('__framer__') || q('[data-framer-name], [data-framer-component-type]') },
-        { w: 40, label: 'framerusercontent assets', test: () => scriptSrcMatch(/framerusercontent\.com|framer\.com/i) || linkHrefMatch(/framerusercontent\.com/i) }
-      ]
-    },
-    {
-      framework: 'Craft CMS',
-      iconClass: 'craftcms', subtitle: 'Flexible content management system',
-      colorClass: 'craftcms',
-      signals: [
-        { w: 70, label: 'generator meta', test: () => q('meta[name="generator"][content*="Craft CMS"]') },
-        { w: 40, label: 'cpresources assets', test: () => scriptSrcMatch(/\/cpresources\//i) || linkHrefMatch(/\/cpresources\//i) }
-      ]
-    },
-    {
-      framework: 'Duda',
-      iconClass: '', subtitle: 'Website builder for agencies',
-      colorClass: '',
-      signals: [
-        { w: 70, label: 'Duda runtime', test: () => hasGlobal('_dmAPI') || hasGlobal('dmAPI') },
-        { w: 40, label: 'duda CDN assets', test: () => scriptSrcMatch(/irp\.cdn-website\.com|cdn-website\.com/i) || linkHrefMatch(/irp\.cdn-website\.com|cdn-website\.com/i) }
-      ]
-    }
+  const P = [
+    // `parent` = this is a more specific flavour of another platform (shown instead of it).
+    { name: 'WooCommerce', parent: 'WordPress', sub: 'WordPress-powered e-commerce store', signals: [
+      ['gen', /WooCommerce\s*([\d.]+)?/i], ['asset', /\/wp-content\/plugins\/woocommerce\//i, 50],
+      ['dom', 'body.woocommerce, body.woocommerce-page, body.woocommerce-js', 40],
+      ['js', 'woocommerce_params', 50], ['js', 'wc_add_to_cart_params', 50]] },
+    { name: 'WordPress', sub: "The world's most popular content management system", signals: [
+      ['gen', /WordPress\s*([\d.]+)?/i], ['dom', 'link[rel="https://api.w.org/"]', 60],
+      ['asset', /\/wp-(?:content|includes)\//i, 50], ['js', '_wpemojiSettings', 60], ['js', 'wp.i18n', 40],
+      ['hdr', ['link', /api\.w\.org/i]], ['hdr', ['x-pingback', /xmlrpc\.php/i]]],
+      version: () => {
+        // The block-library / emoji asset ?ver= equals the core version even when the generator tag is removed.
+        const u = W.util.asset(/\/wp-includes\/(?:css\/dist\/block-library\/style(?:\.min)?\.css|js\/wp-emoji-release\.min\.js|css\/dashicons(?:\.min)?\.css)\?ver=\d/i);
+        const m = u && u.match(/\?ver=(\d+\.\d+(?:\.\d+)?)/);
+        return m ? m[1] : '';
+      } },
+    { name: 'Shopify', sub: 'Leading e-commerce platform for online stores', signals: [
+      ['js', 'Shopify.shop'], ['js', 'Shopify.theme', 40], ['asset', /cdn\.shopify\.com|\/cdn\/shop\//i, 50],
+      ['dom', 'meta[name="shopify-digital-wallet"], meta[name="shopify-checkout-api-token"], link[href*="monorail-edge.shopifysvc.com"]', 50],
+      ['hdr', ['x-shopid', /./]], ['hdr', ['powered-by', /shopify/i]]] },
+    { name: 'Wix', sub: 'Popular drag-and-drop website builder', signals: [
+      ['gen', /Wix\.com/i], ['asset', /static\.parastorage\.com|static\.wixstatic\.com/i, 50],
+      ['js', 'wixBiSession'], ['js', 'wixPerformanceMeasurements'], ['hdr', ['x-wix-request-id', /./]]] },
+    { name: 'Webflow', sub: 'Design-focused website builder with CMS capabilities', signals: [
+      ['gen', /Webflow/i], ['js', 'Webflow'], ['dom', 'html[data-wf-page], html[data-wf-site], [data-wf-page], [data-wf-site]', 50],
+      ['asset', /website-files\.com|webflow(?:\.[a-f0-9]+)?(?:\.min)?\.js/i, 40]] },
+    { name: 'Squarespace', sub: 'All-in-one website builder and hosting platform', signals: [
+      ['gen', /Squarespace/i], ['js', 'Static.SQUARESPACE_CONTEXT'], ['asset', /static\d*\.squarespace\.com|squarespace-cdn\.com/i, 50],
+      ['hdr', ['server', /squarespace/i]]] },
+    { name: 'Joomla', sub: 'Powerful open-source content management system', signals: [
+      ['gen', /Joomla/i], ['js', 'Joomla'], ['dom', 'script.joomla-script-options', 60],
+      ['asset', /\/media\/(?:system|jui|vendor\/joomla|templates\/site)\//i, 40]] },
+    { name: 'Drupal', sub: 'Enterprise-level open-source CMS', signals: [
+      ['gen', /Drupal\s*(\d+(?:\.\d+)*)?/i], ['js', 'Drupal'], ['js', 'drupalSettings', 60],
+      ['dom', 'script[data-drupal-selector="drupal-settings-json"]', 60],
+      ['asset', /\/sites\/(?:default|all)\/(?:files|modules|themes)\/|\/core\/misc\/drupal(?:\.init)?\.js/i, 40],
+      ['hdr', ['x-generator', /drupal/i]], ['hdr', ['x-drupal-cache', /./]], ['hdr', ['x-drupal-dynamic-cache', /./]]] },
+    { name: 'Magento', sub: 'Adobe Commerce — enterprise e-commerce platform', signals: [
+      ['dom', 'script[type="text/x-magento-init"]', 70],
+      ['asset', /\/static\/(?:version\d+\/)?frontend\/[^/]+\/[^/]+\/[a-z]{2}_[A-Z]{2}\//, 50],
+      ['js', 'Mage.Cookies', 50], ['hdr', ['x-magento-tags', /./]], ['hdr', ['x-magento-cache-debug', /./]]] },
+    { name: 'PrestaShop', sub: 'Open-source e-commerce platform', signals: [
+      ['gen', /PrestaShop/i], ['js', 'prestashop.currency'], ['js', 'prestashop', 50],
+      ['asset', /\/modules\/ps_[a-z_]+\//i, 40], ['cookie', /PrestaShop-[a-f0-9]{20,}/i, 50],
+      ['hdr', ['powered-by', /prestashop/i]]] },
+    { name: 'BigCommerce', sub: 'SaaS e-commerce platform (Stencil)', signals: [
+      ['js', 'BCData'], ['asset', /cdn\d+\.bigcommerce\.com/i, 50], ['asset', /stencil-utils/i, 30]] },
+    { name: 'OpenCart', sub: 'Open-source PHP e-commerce platform', signals: [
+      ['gen', /OpenCart/i], ['asset', /\/catalog\/view\/(?:theme|javascript)\//i, 50],
+      ['dom', 'a[href*="index.php?route="], form[action*="index.php?route="]', 30], ['cookie', /OCSESSID=/, 40]] },
+    { name: 'Shopware', sub: 'German open-source e-commerce platform', signals: [
+      ['gen', /Shopware/i], ['asset', /\/bundles\/storefront\/|\/theme\/[a-f0-9]{32}\/(?:css|js)\//i, 50],
+      ['dom', '[data-shopware], meta[name="shopware"]', 50]] },
+    { name: 'Salesforce Commerce Cloud', sub: 'Enterprise e-commerce (Demandware)', signals: [
+      ['asset', /\/on\/demandware\.(?:static|store)\//i, 70], ['dom', 'img[src*="/on/demandware.static/"]', 50]] },
+    { name: 'Ghost', sub: 'Modern publishing platform for blogs & newsletters', signals: [
+      ['gen', /Ghost\s*([\d.]+)?/i], ['asset', /sodo-search|\/ghost\/(?:api|assets)\/|@tryghost\/portal/i, 40],
+      ['hdr', ['x-ghost-cache-status', /./]]] },
+    { name: 'Blogger', sub: "Google's free blog publishing service", signals: [
+      ['gen', /Blogger/i], ['js', '_WidgetManager'], ['asset', /www\.blogger\.com\/static|blogblog\.com/i, 40]] },
+    { name: 'HubSpot CMS', sub: 'Marketing-focused CMS by HubSpot', signals: [
+      ['gen', /HubSpot/i], ['asset', /\/_hcms\/|\/hs\/hsstatic\//i, 60], ['hdr', ['x-hs-hub-id', /./]]] },
+    { name: 'Framer', sub: 'Design-first website builder', signals: [
+      ['gen', /Framer\s*([a-f0-9.]+)?/i], ['dom', '[data-framer-name], [data-framer-component-type], #__framer-badge-container', 60],
+      ['asset', /framerusercontent\.com/i, 40]] },
+    { name: 'Craft CMS', sub: 'Flexible content management system', signals: [
+      ['gen', /Craft CMS/i], ['asset', /\/cpresources\//i, 40], ['cookie', /CraftSessionId=/, 50],
+      ['hdr', ['x-powered-by', /craft cms/i]]] },
+    { name: 'Duda', sub: 'Website builder for agencies', signals: [
+      ['js', 'dmAPI'], ['js', '_dmAPI'], ['asset', /irp\.cdn-website\.com|cdn-website\.com/i, 50]] },
+    { name: 'TYPO3', sub: 'Enterprise open-source CMS', signals: [
+      ['gen', /TYPO3\s*(?:CMS)?\s*([\d.]+)?/i], ['asset', /\/typo3(?:temp|conf)\/|\/_assets\/[a-f0-9]{32}\//i, 50]] },
+    { name: 'Concrete CMS', sub: 'Open-source CMS (formerly concrete5)', signals: [
+      ['gen', /concrete5|Concrete CMS/i], ['js', 'CCM_DISPATCHER_FILENAME'], ['asset', /\/concrete\/(?:js|css)\//i, 40]] },
+    { name: 'Sitecore', sub: 'Enterprise digital experience platform', signals: [
+      ['dom', 'img[src*="/-/media/"], link[href*="/-/media/"], source[srcset*="/-/media/"]', 40],
+      ['cookie', /SC_ANALYTICS_GLOBAL_COOKIE|sxa_site=/i, 60], ['asset', /\/sitecore\//i, 30]] },
+    { name: 'Adobe Experience Manager', sub: 'Enterprise CMS by Adobe', signals: [
+      ['asset', /\/etc\.clientlibs\/|\/etc\/designs\//i, 60], ['dom', 'img[src*="/content/dam/"], [data-cmp-is]', 30]] },
+    { name: 'Odoo', sub: 'Open-source business apps with website builder', signals: [
+      ['gen', /Odoo/i], ['asset', /\/web\/assets\//i, 40], ['js', 'odoo.define', 60]] },
+    { name: 'Weebly / Square Online', sub: 'Website builder by Square', signals: [
+      ['asset', /editmysite\.com/i, 60], ['js', '_W.configDomain', 50]] },
+    { name: 'GoDaddy Website Builder', sub: 'Website builder by GoDaddy', signals: [
+      ['gen', /Go ?Daddy Website Builder|Starfield Technologies/i], ['asset', /img\d*\.wsimg\.com/i, 40]] },
+    { name: 'Tilda', sub: 'Block-based website builder', signals: [
+      ['gen', /Tilda/i], ['asset', /tildacdn\.com|static\.tildacdn/i, 60]] },
+    { name: 'Jimdo', sub: 'Website builder for small businesses', signals: [
+      ['asset', /jimstatic\.com|jimcdn\.com/i, 60], ['js', 'jimdoData', 60]] },
+    { name: 'Strikingly', sub: 'Simple one-page website builder', signals: [
+      ['asset', /strikinglycdn\.com/i, 60]] },
+    { name: 'Hostinger Website Builder', sub: 'Website builder by Hostinger (Zyro)', signals: [
+      ['gen', /Hostinger|Zyro/i], ['asset', /zyrosite\.com|userapp\.zyrosite/i, 50]] },
+    { name: 'Kajabi', sub: 'Platform for courses & digital products', signals: [
+      ['js', 'Kajabi'], ['asset', /kajabi-cdn\.com|kajabi-storefronts/i, 60]] },
+    { name: 'Teachable', sub: 'Online course platform', signals: [
+      ['asset', /teachablecdn\.com/i, 60], ['js', 'Teachable', 60]] },
+    { name: 'Thinkific', sub: 'Online course platform', signals: [
+      ['asset', /thinkific\.com|thinkific-assets/i, 50], ['js', 'Thinkific', 60]] },
+    { name: 'Substack', sub: 'Newsletter & publishing platform', signals: [
+      ['asset', /substackcdn\.com/i, 60], ['host', /\.substack\.com$/i]] },
+    { name: 'Medium', sub: 'Online publishing platform', signals: [
+      ['dom', 'meta[property="al:android:package"][content="com.medium.reader"]', 70], ['asset', /cdn-client\.medium\.com/i, 50]] },
+    { name: 'Tumblr', sub: 'Microblogging platform', signals: [
+      ['asset', /assets\.tumblr\.com/i, 50], ['host', /\.tumblr\.com$/i]] },
+    { name: 'Notion', sub: 'Page published from Notion', signals: [
+      ['host', /\.notion\.site$/i], ['asset', /notion\.so\/|notion-static\.com/i, 40]] },
+    { name: 'Docusaurus', sub: 'Documentation site generator (React)', signals: [
+      ['gen', /Docusaurus\s*v?([\d.]+)?/i], ['js', '__docusaurus', 60]] },
+    { name: 'VitePress', sub: 'Documentation site generator (Vue)', signals: [
+      ['gen', /VitePress\s*v?([\d.]+)?/i], ['js', '__VP_HASH_MAP__', 60]] },
+    { name: 'MkDocs', sub: 'Documentation site generator (Python)', signals: [
+      ['gen', /mkdocs-([\d.]+)/i]] },
+    { name: 'GitBook', sub: 'Documentation platform', signals: [
+      ['gen', /GitBook\s*([\d.]+)?/i], ['asset', /gitbook\.(?:io|com)\/|static\.gitbook/i, 40]] },
+    { name: 'Sphinx', sub: 'Documentation generator (Python)', signals: [
+      ['gen', /Sphinx\s*([\d.]+)?/i], ['dom', 'script[src*="documentation_options.js"]', 50]] },
+    { name: 'Mintlify', sub: 'Documentation platform', signals: [
+      ['gen', /Mintlify/i], ['asset', /mintlify/i, 40]] }
   ];
 
-  // Score every detector by the weighted sum of its matched signals.
-  const scored = detectors.map(d => {
-    let score = 0; const matched = [];
-    for (const s of d.signals) {
-      let ok = false;
-      try { ok = !!s.test(); } catch (_) { ok = false; }
-      if (ok) { score += s.w; matched.push(s.label); }
+  function test(sig, hdrs) {
+    const U = W.util;
+    const [type, pat] = sig;
+    switch (type) {
+      case 'gen': { const m = U.gen(pat); return m ? { label: `generator meta "${m[0].slice(0, 40)}"`, version: m[1] || '' } : null; }
+      case 'js': return U.has(pat) ? { label: `runtime global window.${pat}` } : null;
+      case 'dom': return U.q(pat) ? { label: `page markup (${pat.split(',')[0].trim()})` } : null;
+      case 'asset': { const u = U.asset(pat); return u ? { label: `asset ${U.shortUrl(u)}` } : null; }
+      case 'cookie': return U.cookie(pat) ? { label: 'platform cookie' } : null;
+      case 'head': return U.headHtml(pat) ? { label: 'page <head> markup' } : null;
+      case 'host': return pat.test(location.hostname) ? { label: `hosted on ${location.hostname}` } : null;
+      case 'hdr': {
+        const [name, re] = pat;
+        const v = hdrs && hdrs[name];
+        return v && re.test(v) ? { label: `response header ${name}` } : null;
+      }
     }
-    return { ...d, score, matched };
-  });
-
-  let best = null;
-  for (const d of scored) {
-    if (d.score > 0 && (!best || d.score > best.score)) best = d;
+    return null;
   }
 
-  // Prefer the more specific platform when present (e.g. show WooCommerce, not
-  // just WordPress; Magento/PrestaShop over a generic match) even if a base
-  // platform scored higher.
-  const specific = scored
-    .filter(d => d.specific && d.score >= 30)
-    .sort((a, b) => b.score - a.score)[0];
-  if (specific) best = specific;
+  const DEFAULT_W = { gen: 70, js: 70, dom: 40, asset: 40, hdr: 60, cookie: 40, head: 40, host: 70 };
 
-  const realStats = {
-    scriptsFound: document.scripts.length,
-    metaTags: document.querySelectorAll('meta').length,
-    linksFound: document.querySelectorAll('link').length
-  };
+  W.platforms = P.map(p => p.name);
 
-  // Best-effort version from the generator meta tag (WordPress, Drupal, …).
-  const versionFromGenerator = () => {
-    try {
-      const m = document.querySelector('meta[name="generator"], meta[name="Generator"]');
-      const c = (m && m.content) || '';
-      const match = c.match(/(\d+(?:\.\d+){1,2})/);
-      return match ? match[1] : '';
-    } catch (_) { return ''; }
-  };
+  W.detectFramework = function detectFramework(headers) {
+    const hdrs = (headers && headers.all) || {};
+    const scored = P.map((p, order) => {
+      let score = 0, version = '';
+      const matched = [];
+      for (const sig of p.signals) {
+        let r = null;
+        try { r = test(sig, hdrs); } catch (_) { r = null; }
+        if (!r) continue;
+        score += sig[2] || DEFAULT_W[sig[0]];
+        matched.push(r.label);
+        if (r.version && !version) version = r.version;
+      }
+      if (score && !version && p.version) { try { version = p.version() || ''; } catch (_) {} }
+      return { p, order, score, matched, version };
+    }).filter(s => s.score >= 40);
 
-  if (best && best.score >= 20) {
-    return {
-      framework: best.framework,
-      iconClass: best.iconClass,
-      subtitle: best.subtitle,
-      colorClass: best.colorClass,
-      confidence: Math.min(98, best.score),
-      version: versionFromGenerator(),
-      details: best.matched.map(m => `Matched: ${m}`),
-      ...realStats
+    scored.sort((a, b) => (b.score - a.score) || (a.order - b.order));
+    let best = scored[0] || null;
+
+    // Show the specific flavour (WooCommerce) instead of its parent (WordPress).
+    if (best) {
+      const child = scored.find(s => s.p.parent === best.p.name);
+      if (child) best = child;
+    }
+
+    const stats = {
+      scriptsFound: document.scripts.length,
+      metaTags: document.querySelectorAll('meta').length,
+      linksFound: document.querySelectorAll('link').length
     };
-  }
 
-  return {
-    framework: 'Custom/Unknown',
-    iconClass: '', subtitle: 'This site appears to be custom-built or uses a less common framework',
-    colorClass: '',
-    confidence: best ? Math.min(98, best.score) : 0,
-    details: [
-      'No generator meta tag for a known platform',
-      'No platform-specific runtime globals found',
-      'No platform-specific asset paths identified'
-    ],
-    ...realStats
+    if (best) {
+      const others = scored.filter(s => s !== best && s.p.name !== best.p.parent).map(s => s.p.name);
+      // A child platform inherits its parent's evidence (WooCommerce runs on WordPress).
+      const parent = best.p.parent ? scored.find(s => s.p.name === best.p.parent) : null;
+      const score = best.score + (parent ? Math.min(parent.score, 40) : 0);
+      return {
+        framework: best.p.name,
+        subtitle: best.p.sub,
+        confidence: Math.min(98, score),
+        version: best.version,
+        parentPlatform: parent ? { name: parent.p.name, version: parent.version } : null,
+        alsoDetected: others,
+        details: best.matched.concat(parent ? parent.matched.slice(0, 2).map(m => `${parent.p.name}: ${m}`) : []),
+        ...stats
+      };
+    }
+    return {
+      framework: 'Custom/Unknown',
+      subtitle: 'No known CMS or site builder found — likely custom-built',
+      confidence: 0, version: '', alsoDetected: [],
+      details: [],
+      ...stats
+    };
   };
-}
-
-// Expose for on-demand MAIN-world injection (chrome.scripting two-step call).
-if (typeof window !== "undefined") window.detectFramework = detectFramework;
+})();
