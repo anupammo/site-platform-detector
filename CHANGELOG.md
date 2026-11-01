@@ -10,6 +10,16 @@ Accuracy fixes for real-world sites, plus the everyday tools people asked for:
 "which plugins/apps does this site use?", "is my tracking installed?", and
 "is anything blocking Google?".
 
+### Redesigned — a bigger, app-style window
+- **780×580 dashboard** (up from a 400px column) with a sidebar: Overview, Tech stack, Marketing, SEO health, Security, History. Keys `1`–`6` switch sections, `R` rescans, `C` copies the report, `/` searches.
+- **Overview at a glance** — platform hero with a confidence ring, KPI tiles (theme, hosting, health score, technology count), highlights, tracking installed and top issues.
+- **Health score (0–100)** with a fix tip for every issue and a list of passed checks.
+- **Security headers explained** in plain language, with a score out of 6.
+- **Clickable history** (last 50 scans, searchable): reopen any saved result without rescanning, and export your history as **CSV**.
+- **Discoveries** — a private collection of the 44 platforms you've found so far, with a toast when you discover a new one.
+- **Open full report** in a browser tab for a large view; **instant reopen** shows the last scan of the same page (under 2 minutes old) immediately.
+- Colored monogram icons for technologies without a bundled logo; copy-to-clipboard ID pills; loading steps; refined light and dark themes.
+
 ### Fixed (detection bugs found in a 1.3 audit — each now has a regression test)
 - **WordPress and Drupal sites reported as PrestaShop.** Any theme with a `/themes/<name>/assets/` folder (Astra, Kadence, GeneratePress, most Drupal 8+ themes) matched a loose PrestaShop rule that also overrode the real platform.
 - **WordPress/Webflow sites with a HubSpot form reported as "HubSpot CMS".** HubSpot forms/tracking no longer count as the CMS.

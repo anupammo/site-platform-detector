@@ -19,6 +19,8 @@ Website Framework Detector is a lightweight Chrome extension that identifies whi
 
 ## 🆕 What's new in v1.4
 
+- **A bigger, app-style window (780×580).** Sidebar sections for Overview, Tech stack, Marketing, SEO health, Security and History, a confidence ring, a 0–100 health score, keyboard shortcuts and an "open full report" tab view.
+- **Clickable history + CSV export, and Discoveries.** Reopen any past scan instantly, and collect the platforms you find.
 - **More accurate on real sites.** A full audit fixed WordPress/Drupal sites showing as PrestaShop, WordPress sites with HubSpot forms showing as "HubSpot CMS", Django sites showing as Magento, Laravel sites showing as Rails, and more. Every fix has a regression test.
 - **44 platforms** (up from 17). New: OpenCart, Shopware, Salesforce Commerce Cloud, TYPO3, Sitecore, AEM, Odoo, Weebly, GoDaddy, Tilda, Jimdo, Kajabi, Teachable, Substack, Notion, Docusaurus, GitBook and more.
 - **Plugins & apps.** Every WordPress plugin the page loads (with versions), page builders, SEO plugins and Shopify apps.

@@ -43,7 +43,7 @@ const ROOT = path.join(__dirname, '..');
       const orig = chrome.tabs.query.bind(chrome.tabs);
       chrome.tabs.query = (q, cb) => { const p = orig({ url: url + '*' }); return cb ? p.then(cb) : p; };
     }, origin + '/');
-    await popup.setViewportSize({ width: 420, height: 1400 });
+    await popup.setViewportSize({ width: 780, height: 580 });
     await popup.goto(`chrome-extension://${extId}/popup.html`);
     await popup.waitForSelector('#resultContainer:not(.hidden), #errorBox:not(.hidden)', { timeout: 15000 });
     const title = await popup.textContent('#resultTitle');
@@ -52,7 +52,35 @@ const ROOT = path.join(__dirname, '..');
     const ok = !err && fx.expect.framework ? title === fx.expect.framework : !err;
     if (!ok || errors.length || leaked !== 'undefined') failed++;
     console.log(`${ok && !errors.length && leaked === 'undefined' ? '✓' : '✗'} ${fx.name}: popup shows "${title}"${err ? ' ERROR ' + err : ''}${errors.length ? ' console: ' + errors.join(' | ') : ''}${leaked !== 'undefined' ? ' (window.__wfd left on page!)' : ''}`);
-    if (process.env.SHOT_DIR) await popup.screenshot({ path: path.join(process.env.SHOT_DIR, key.replace(/\W/g, '') + '.png'), fullPage: true });
+    if (process.env.SHOT_DIR) {
+      const base = path.join(process.env.SHOT_DIR, key.replace(/\W/g, ''));
+      await popup.waitForTimeout(1200);
+      await popup.screenshot({ path: base + '-overview.png' });
+      if (process.env.ALL_TABS) {
+        for (const t of ['stack', 'marketing', 'health', 'security', 'history']) {
+          await popup.click(`.nav-item[data-tab="${t}"]`);
+          await popup.waitForTimeout(700);
+          await popup.screenshot({ path: `${base}-${t}.png` });
+        }
+        // Open a saved scan from history.
+        await popup.click('#historyList .row.click');
+        await popup.waitForSelector('#savedBanner:not(.hidden)', { timeout: 3000 });
+        console.log('   history → saved scan banner OK');
+        // Full-tab report.
+        const [full] = await Promise.all([ctx.waitForEvent('page'), popup.click('#popoutBtn')]);
+        await full.setViewportSize({ width: 1280, height: 860 });
+        await full.waitForSelector('#resultContainer:not(.hidden)', { timeout: 5000 });
+        await full.waitForTimeout(1000);
+        console.log('   full report tab shows', JSON.stringify(await full.textContent('#resultTitle')));
+        await full.screenshot({ path: base + '-fulltab.png' });
+        await full.close();
+        await popup.click('.nav-item[data-tab="overview"]');
+        await popup.click('#themeToggle');
+        await popup.waitForTimeout(900);
+        await popup.screenshot({ path: base + '-dark.png' });
+        await popup.click('#themeToggle');
+      }
+    }
     await popup.close(); await site.close();
     await ctx.unrouteAll({ behavior: 'ignoreErrors' });
   }

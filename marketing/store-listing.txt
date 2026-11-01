@@ -40,10 +40,14 @@ Cloudflare, Vercel, Netlify, AWS, WP Engine, Kinsta, Hostinger and 20 more, the 
 ✅ SITE HEALTH IN ONE GLANCE
 Catches costly mistakes: a page set to noindex, robots.txt blocking Google, missing HTTPS or mixed content, missing title/description/H1, canonical pointing elsewhere, no sitemap, end-of-life PHP.
 
+✅ A REAL DASHBOARD, NOT A TINY POPUP
+A large, app-style window with sections for Overview, Tech stack, Marketing, SEO health, Security and History, a 0–100 health score, keyboard shortcuts, and a full-report tab view.
+
 ✅ BUILT FOR REAL WORK
 • Auto-detects the moment you open it — one click to re-scan
 • Copy a ready-to-paste Markdown report (Slack, Notion, Jira, email) or export JSON
-• Recent scans history, toolbar badge and Alt+Shift+D shortcut
+• Clickable history of your last 50 scans with CSV export, plus a personal collection of every platform you've discovered
+• Toolbar badge and Alt+Shift+D shortcut
 • Wrong result? Report it in one click so it gets fixed
 • Light & dark mode
 • Real brand logos for instant recognition

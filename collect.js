@@ -28,36 +28,59 @@
     return d && Date.now() > Date.parse(d) ? d : '';
   }
 
-  // Practical problems worth fixing. level: 'error' | 'warn'.
+  // Every check: [id, level-if-failing, failed?, fail text, pass text, how to fix].
+  // Returns { failed: [...], passed: [...] }.
   function healthChecks(pi, si, hd) {
-    const out = [];
-    const add = (id, level, text) => out.push({ id, level, text });
+    const C = [];
+    const add = (id, level, failed, text, okText, tip) => C.push({ id, level, failed: !!failed, text, okText, tip });
     if (pi) {
-      if (/noindex/i.test(pi.robots) || (hd && /noindex/i.test(hd.xRobotsTag || ''))) add('noindex', 'error', 'Page is set to noindex — search engines will not show it');
-      if (!pi.https) add('no-https', 'error', 'Page is not served over HTTPS');
-      if (pi.mixedContent) add('mixed-content', 'error', `${pi.mixedContent} insecure http:// resource(s) on an https page`);
-      if (!pi.titleLength) add('no-title', 'error', 'Missing <title>');
-      else if (pi.titleLength > 65) add('title-long', 'warn', `Title is ${pi.titleLength} characters (aim for under 60)`);
-      if (!pi.hasDescription) add('no-description', 'warn', 'Missing meta description');
-      if (pi.h1 === 0) add('no-h1', 'warn', 'No H1 heading');
-      else if (pi.h1 > 1) add('multiple-h1', 'warn', `${pi.h1} H1 headings (use one)`);
-      if (pi.canonicalOtherHost) add('canonical-elsewhere', 'warn', 'Canonical URL points to another domain');
-      if (!pi.mobileFriendly) add('no-viewport', 'warn', 'No mobile viewport meta tag');
-      if (!pi.lang) add('no-lang', 'warn', 'No lang attribute on <html>');
-      if (pi.imagesMissingAlt) add('img-alt', 'warn', `${pi.imagesMissingAlt} image(s) without alt text`);
-      if (!pi.socialCards) add('no-social', 'warn', 'No Open Graph / social share tags');
+      add('noindex', 'error', /noindex/i.test(pi.robots) || (hd && /noindex/i.test(hd.xRobotsTag || '')),
+        'Page is set to noindex — search engines will not show it', 'Page can be indexed',
+        'Remove "noindex" from the robots meta tag / X-Robots-Tag header (WordPress: Settings → Reading).');
+      add('no-https', 'error', !pi.https, 'Page is not served over HTTPS', 'Served over HTTPS',
+        'Install a TLS certificate (free with Let\'s Encrypt or Cloudflare) and redirect http → https.');
+      add('mixed-content', 'error', pi.mixedContent > 0, `${pi.mixedContent} insecure http:// resource(s) on an https page`, 'No mixed content',
+        'Change the listed resource URLs to https:// so browsers don\'t block them.');
+      add('no-title', 'error', !pi.titleLength, 'Missing <title>', 'Has a page title', 'Add a unique, descriptive <title> (50–60 characters).');
+      if (pi.titleLength) add('title-long', 'warn', pi.titleLength > 65, `Title is ${pi.titleLength} characters (aim for under 60)`, `Title length OK (${pi.titleLength} chars)`,
+        'Google truncates titles around 60 characters — put the key phrase first.');
+      add('no-description', 'warn', !pi.hasDescription, 'Missing meta description', 'Has a meta description',
+        'Add a 120–155 character meta description; it is the snippet people read in search results.');
+      add('h1', 'warn', pi.h1 !== 1, pi.h1 === 0 ? 'No H1 heading' : `${pi.h1} H1 headings (use one)`, 'One H1 heading',
+        'Use exactly one H1 that describes the page topic.');
+      add('canonical-elsewhere', 'warn', pi.canonicalOtherHost, 'Canonical URL points to another domain', pi.canonical ? 'Canonical tag set' : 'No conflicting canonical',
+        'A cross-domain canonical tells Google to index the other site instead — check it is intentional.');
+      add('no-viewport', 'warn', !pi.mobileFriendly, 'No mobile viewport meta tag', 'Mobile viewport set',
+        'Add <meta name="viewport" content="width=device-width, initial-scale=1">.');
+      add('no-lang', 'warn', !pi.lang, 'No lang attribute on <html>', `Language declared (${pi.lang})`,
+        'Add lang="en" (or your language) to the <html> tag for accessibility and SEO.');
+      add('img-alt', 'warn', pi.imagesMissingAlt > 0, `${pi.imagesMissingAlt} image(s) without alt text`, 'All images have alt text',
+        'Describe each meaningful image in its alt attribute; use alt="" for decorative ones.');
+      add('no-social', 'warn', !pi.socialCards, 'No Open Graph / social share tags', 'Social share tags present',
+        'Add og:title, og:description and og:image so links look good on WhatsApp, LinkedIn and X.');
+      add('no-schema', 'warn', !pi.structuredData, 'No structured data (JSON-LD)', 'Structured data present',
+        'Add schema.org JSON-LD (Organization, Product, Article…) to qualify for rich results.');
     }
-    if (si) {
-      if (si.robots && si.robots.blocksAll) add('robots-blocks-all', 'error', 'robots.txt blocks all crawlers (Disallow: /)');
-      if (!si.sitemap && /^https?:$/.test(location.protocol)) add('no-sitemap', 'warn', 'No XML sitemap found');
+    if (si && /^https?:$/.test(location.protocol)) {
+      add('robots-blocks-all', 'error', si.robots && si.robots.blocksAll, 'robots.txt blocks all crawlers (Disallow: /)',
+        si.robots && si.robots.found ? 'robots.txt allows crawling' : 'No robots.txt block',
+        'Remove "Disallow: /" under "User-agent: *" — common after launching from a staging site.');
+      add('no-sitemap', 'warn', !si.sitemap, 'No XML sitemap found', 'XML sitemap found' + (si.sitemapUrl ? ` (${si.sitemapUrl.replace(/^https?:\/\/[^/]+/, '') || si.sitemapUrl})` : ''),
+        'Publish /sitemap.xml and list it in robots.txt and Google Search Console.');
     }
     if (hd && hd.available) {
       const php = (hd.backend || []).find(b => b.name === 'PHP');
-      const eol = php && phpEol(php.version);
-      if (eol) add('php-eol', 'error', `PHP ${php.version} is end-of-life (no security fixes since ${eol})`);
-      if (hd.serverInfo && hd.serverInfo.version) add('server-version', 'warn', `Server reveals its version (${hd.serverInfo.name} ${hd.serverInfo.version})`);
+      if (php && php.version) {
+        const eol = phpEol(php.version);
+        add('php-eol', 'error', !!eol, `PHP ${php.version} is end-of-life (no security fixes since ${eol})`, `PHP ${php.version} is supported`,
+          'Ask your host to upgrade to a supported PHP version (8.3+).');
+      }
+      add('server-version', 'warn', hd.serverInfo && hd.serverInfo.version, `Server reveals its version (${hd.serverInfo ? hd.serverInfo.name + ' ' + hd.serverInfo.version : ''})`, 'Server version hidden',
+        'Hide version numbers (nginx: server_tokens off; Apache: ServerTokens Prod) so attackers can\'t target known bugs.');
     }
-    return out;
+    const failed = C.filter(c => c.failed).map(c => ({ id: c.id, level: c.level, text: c.text, tip: c.tip }));
+    const passed = C.filter(c => !c.failed).map(c => ({ id: c.id, text: c.okText }));
+    return { failed, passed };
   }
 
   W.collect = async function collect() {
@@ -90,6 +113,7 @@
     let pageInfo = null;
     try { pageInfo = W.detectPageInfo(); } catch (_) {}
     const siteInfo = await siteInfoP;
+    const hc = healthChecks(pageInfo, siteInfo, headers);
 
     return {
       ...fw,
@@ -101,7 +125,9 @@
         siteInfo: siteInfo ? { sitemap: siteInfo.sitemap, sitemapUrl: siteInfo.sitemapUrl, robots: siteInfo.robots } : null,
         pageInfo,
         headers,
-        health: healthChecks(pageInfo, siteInfo, headers)
+        health: hc.failed,
+        healthPassed: hc.passed,
+        healthScore: Math.max(0, 100 - hc.failed.reduce((n, h) => n + (h.level === 'error' ? 15 : 6), 0))
       }
     };
   };

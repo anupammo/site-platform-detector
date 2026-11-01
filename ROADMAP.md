@@ -39,12 +39,14 @@ Done in this release (see [CHANGELOG](CHANGELOG.md)):
 - [x] Site health: noindex, robots.txt blocking, mixed content, title/description/H1, canonical, sitemap, end-of-life PHP.
 - [x] Markdown report, "Report a wrong result" (pre-filled GitHub issue), friendlier errors.
 - [x] Regression tests: 33 fixture pages + an end-to-end popup test.
+- [x] App-style 780×580 window with sidebar sections, health score, keyboard shortcuts and a full-tab report.
+- [x] Clickable history with CSV export (pulled forward from 1.5), and a Discoveries collection (a reason to keep scanning).
 
 Release checklist:
 
 - [ ] Load unpacked, test on 10 real sites (2 WordPress, 2 Shopify, Wix, Webflow, a Next.js site, a Laravel app, a Drupal site, a site you know blocks crawlers).
 - [ ] `npm run package` → upload `dist/website-framework-detector-1.4.0.zip`. Permissions are unchanged, so review should be quick.
-- [ ] New screenshots (1280×800): ① WordPress result with theme + plugins, ② Shopify with theme + apps, ③ tracking IDs + site health, ④ hosting/security, ⑤ dark mode.
+- [ ] New screenshots (1280×800) of the new window on real sites: ① Overview of a WordPress site, ② Tech stack with plugins, ③ Marketing with tracking IDs, ④ SEO health score, ⑤ History & discoveries in dark mode. The full-report tab view (expand icon) is easiest to capture at 1280×800.
 - [ ] Update the listing text from `marketing/store-listing.txt` (see the ASO section below).
 - [ ] After approval: merge this branch into `main` and tag `v1.4.0`. **`main` is still on 1.2.1 while the store runs 1.3.0.** Keep `main` equal to what is live.
 - [ ] Publish the same zip to **Microsoft Edge Add-ons** (partner.microsoft.com → Edge → new extension).
@@ -53,7 +55,7 @@ Release checklist:
 
 Features that bring people back (retention is what keeps search ranking up):
 
-- [ ] **Clickable history.** Store the full result and reopen it from the history list without rescanning. **Export history as CSV** for agencies and freelancers building lead lists (for example, "WordPress sites on end-of-life PHP").
+- [ ] **Saved lists & notes.** Star scans into named lists (e.g. "Leads", "Competitors") and add a note, building on the history + CSV export shipped in 1.4.
 - [ ] **Outdated software warnings.** Bundle a small "latest version" table with each release: WordPress, PHP, jQuery < 3.5 (known XSS), Bootstrap 3, AngularJS (end-of-life). Show this in Site health.
 - [ ] **Fonts & colors.** Fonts actually used (computed families) and the main color palette, so designers can use it too.
 - [ ] **Core Web Vitals snapshot.** LCP, CLS and INP from the current tab using `PerformanceObserver`, measured locally.
